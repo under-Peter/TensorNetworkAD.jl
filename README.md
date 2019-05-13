@@ -10,7 +10,6 @@ alt="TensorNetworkAD logo" width="510"></img>
 [![Build Status](https://travis-ci.com/under-Peter/TensorNetworkAD.jl.svg?branch=master)](https://travis-ci.com/under-Peter/TensorNetworkAD.jl)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/under-Peter/TensorNetworkAD.jl?svg=true)](https://ci.appveyor.com/project/under-Peter/TensorNetworkAD-jl)
 [![Codecov](https://codecov.io/gh/under-Peter/TensorNetworkAD.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/under-Peter/TensorNetworkAD.jl)
-[![Coveralls](https://coveralls.io/repos/github/under-Peter/TensorNetworkAD.jl/badge.svg?branch=master)](https://coveralls.io/github/under-Peter/TensorNetworkAD.jl?branch=master)
 
 
 
@@ -26,3 +25,6 @@ More generally we aim to provide Julia with the tools to combine AD and tensor n
 
 
 Suggestions and Comments in the _Issues_ are welcome.
+
+## License
+MIT License

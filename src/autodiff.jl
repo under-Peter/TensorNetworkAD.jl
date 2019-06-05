@@ -1,0 +1,20 @@
+using Zygote
+
+@Zygote.nograd contractionindices
+
+@doc raw"
+    num_grad(f, K::Real; [δ = 1e-5])
+return the numerical gradient of `f` at `K` calculated with
+`(f(K+δ/2) - f(K-δ/2))/δ`
+"
+num_grad(f, K::Real; δ::Real = 1e-5) = (f(K+δ/2) - f(K-δ/2))/δ
+
+@doc raw"
+    num_grad(f, K::AbstractArray; [δ = 1e-5])
+return the numerical gradient of `f` for each element of `K`.
+"
+function num_grad(f, a::AbstractArray; δ::Real = 1e-5)
+    map(CartesianIndices(a)) do i
+        num_grad(a[i], x -> (ac = copy(a); ac[i] = x; f(ac)), δ)
+    end
+end

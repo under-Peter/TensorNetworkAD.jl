@@ -115,7 +115,7 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 deps = ["LinearAlgebra", "Random", "Zygote"]
 git-tree-sha1 = "8be94a8a840409dd017234de98330b90f6180699"
 repo-rev = "master"
-repo-url = "git@github.com:GiggleLiu/LinalgBackwards.jl.git"
+repo-url = "https://github.com/GiggleLiu/LinalgBackwards.jl.git"
 uuid = "8dad3b0d-1a4d-5faa-9471-8c404674cf7c"
 version = "0.1.1"
 
@@ -155,7 +155,7 @@ version = "0.3.2"
 deps = ["IRTools", "PkgBenchmark", "TupleTools", "Zygote"]
 git-tree-sha1 = "7689a992f08f32ec5db07067939bccbc7389e846"
 repo-rev = "master"
-repo-url = "git@github.com:under-Peter/OMEinsum.jl.git"
+repo-url = "https://github.com/under-Peter/OMEinsum.jl.git"
 uuid = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 version = "0.1.0"
 

@@ -1,10 +1,11 @@
 module TensorNetworkAD
+using Zygote, LinalgBackwards
+using OMEinsum
 
-@doc raw"
-    greet()
-greet the world!
-"
+export trg, num_grad
 
-greet() = print("Hello World!")
+include("einsum.jl")
+include("trg.jl")
+include("autodiff.jl")
 
 end # module

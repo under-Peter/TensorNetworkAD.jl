@@ -113,7 +113,7 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [[LinalgBackwards]]
 deps = ["LinearAlgebra", "Random", "Zygote"]
-git-tree-sha1 = "fed67af4bbc3cb33f287bc2673366774ba4cf589"
+git-tree-sha1 = "4ea2a4152be88fa9bc901239f8e673a28ef306b7"
 repo-rev = "master"
 repo-url = "https://github.com/GiggleLiu/LinalgBackwards.jl.git"
 uuid = "8dad3b0d-1a4d-5faa-9471-8c404674cf7c"
@@ -153,7 +153,7 @@ version = "0.3.2"
 
 [[OMEinsum]]
 deps = ["IRTools", "PkgBenchmark", "TupleTools", "Zygote"]
-git-tree-sha1 = "7689a992f08f32ec5db07067939bccbc7389e846"
+git-tree-sha1 = "b68c1e5d719ffa548fdc741f6cbc5feaff05e430"
 repo-rev = "master"
 repo-url = "https://github.com/under-Peter/OMEinsum.jl.git"
 uuid = "ebe7aa44-baf0-506c-a96f-8464559b3922"
@@ -269,7 +269,7 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[Zygote]]
 deps = ["DiffRules", "FillArrays", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "4b9c0799b296c73b60397ed167b6455c31820d06"
+git-tree-sha1 = "72d153a7eb044eca6e6d85378233a18fee2be96d"
 repo-rev = "master"
 repo-url = "https://github.com/FluxML/Zygote.jl.git"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"

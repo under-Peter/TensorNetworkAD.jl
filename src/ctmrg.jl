@@ -1,4 +1,4 @@
-using LinalgBackwards, OMEinsum
+using BackwardsLinalg, OMEinsum
 using LinearAlgebra: normalize, norm
 using Random
 

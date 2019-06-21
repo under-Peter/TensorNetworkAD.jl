@@ -1,5 +1,5 @@
 module TensorNetworkAD
-using Zygote, LinalgBackwards
+using Zygote, BackwardsLinalg
 using OMEinsum
 
 export trg, num_grad

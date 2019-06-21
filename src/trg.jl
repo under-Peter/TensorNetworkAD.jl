@@ -1,5 +1,5 @@
 # using OMEinsum
-using LinalgBackwards
+using BackwardsLinalg
 
 function trg(k, χ, niter)
     D = 2

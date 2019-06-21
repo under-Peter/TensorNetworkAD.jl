@@ -21,16 +21,15 @@ function ctmrg(a, χ, tol, maxit::Integer)
 
     for i in 1:maxit
         # grow
-        cp = einsum(((-1,-2),(1,-3,-1),(-2,-4,4),(2,3,-4,-3)),
-            (c, t, t, a), (1,2,3,4))
-        tp = einsum(((1,-1,5), (3,4,-1,2)), (t,a), (1,2,3,4,5))
+        cp = einsum("ab,ica,bdl,jkdc -> ijkl", (c, t, t, a))
+        tp = einsum("iam,klaj -> ijklm", (t,a))
 
         # renormalize
         cpmat = reshape(cp, size(cp,1) * size(cp,2), size(cp,3) * size(cp,4))
         u, s, v = svd(cpmat)
         z = reshape(u[:, 1:χ], χ, d, χ)
-        c = einsum(((-1,-2,-3,-4), (-1,-2,1), (-4,-3,2)), (cp, z, conj(z)), (1,2))
-        t = einsum(((-1,-2,2,-3,-4), (-1,-2,1), (-4,-3,3)), (tp, conj(z), z), (1,2,3))
+        c = einsum("abcd,abi,dcj -> ij", (cp, z, conj(z)))
+        t = einsum("abjcd,abi,dck -> ijk", (tp, conj(z), z))
 
         # symmetrize
         c +=  transpose(c)
@@ -40,7 +39,7 @@ function ctmrg(a, χ, tol, maxit::Integer)
         _, vals, = svd(c)
         maxval = maximum(vals)
         c = c ./ maxval
-        t = t ./ einsum(((1,2,3),), (t,), ())[1]
+        t = t ./ einsum("ijk -> ", (t,))[]
         vals = vals ./ norm(vals,1) #normalize(vals,1)
 
         #compare

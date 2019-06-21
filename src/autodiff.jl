@@ -1,7 +1,5 @@
 using Zygote
 
-@Zygote.nograd contractionindices
-
 @doc raw"
     num_grad(f, K::Real; [δ = 1e-5])
 return the numerical gradient of `f` at `K` calculated with

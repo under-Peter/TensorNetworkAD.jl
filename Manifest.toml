@@ -3,6 +3,8 @@
 [[BackwardsLinalg]]
 deps = ["LinearAlgebra", "Random", "Zygote"]
 git-tree-sha1 = "4b3a10e3df2e288f1844ed11e9a72d02d81839fc"
+repo-rev = "master"
+repo-url = "https://github.com/GiggleLiu/BackwardsLinalg.jl"
 uuid = "442b4e1a-8b9d-11e9-03b0-f14b31742153"
 version = "0.1.0"
 
@@ -32,6 +34,12 @@ deps = ["Tokenize"]
 git-tree-sha1 = "376a39f1862000442011390f1edf5e7f4dcc7142"
 uuid = "00ebfdb7-1f24-5e51-bd34-a7502290713f"
 version = "0.6.0"
+
+[[Combinatorics]]
+deps = ["LinearAlgebra", "Polynomials", "Test"]
+git-tree-sha1 = "50b3ae4d643dc27eaff69fb6be06ee094d5500c9"
+uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+version = "0.7.0"
 
 [[CommonSubexpressions]]
 deps = ["Test"]
@@ -150,9 +158,9 @@ uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.2"
 
 [[OMEinsum]]
-deps = ["IRTools", "PkgBenchmark", "TupleTools", "Zygote"]
-git-tree-sha1 = "b68c1e5d719ffa548fdc741f6cbc5feaff05e430"
-repo-rev = "master"
+deps = ["Combinatorics", "IRTools", "PkgBenchmark", "TensorOperations", "TupleTools", "Zygote"]
+git-tree-sha1 = "e30c44935c79b66625dd1b64041c413b91bed94d"
+repo-rev = "fix-string-ad"
 repo-url = "https://github.com/under-Peter/OMEinsum.jl.git"
 uuid = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 version = "0.1.0"
@@ -172,6 +180,12 @@ deps = ["BenchmarkTools", "Dates", "InteractiveUtils", "JSON", "LibGit2", "Pkg",
 git-tree-sha1 = "cf641fb115ca4c97ce0a20bdddc3ba973724c61e"
 uuid = "32113eaa-f34f-5b0d-bd6c-c81e245fc73d"
 version = "0.2.1"
+
+[[Polynomials]]
+deps = ["LinearAlgebra", "SparseArrays", "Test"]
+git-tree-sha1 = "62142bd65d3f8aeb2226ec64dd8493349147df94"
+uuid = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
+version = "0.5.2"
 
 [[Printf]]
 deps = ["Unicode"]
@@ -230,6 +244,18 @@ version = "0.11.0"
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
+[[Strided]]
+deps = ["LinearAlgebra", "TupleTools"]
+git-tree-sha1 = "b929f81ca5e78362a4c1e935bb5e7bee27dc2279"
+uuid = "5e0ebb24-38b0-5f93-81fe-25c709ecae67"
+version = "0.3.1"
+
+[[TensorOperations]]
+deps = ["LinearAlgebra", "Strided", "TupleTools"]
+git-tree-sha1 = "2804781ab5e899a0e4c61a4d655e4dea88553710"
+uuid = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
+version = "1.1.0"
+
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
@@ -266,7 +292,7 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[Zygote]]
 deps = ["DiffRules", "FillArrays", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "72d153a7eb044eca6e6d85378233a18fee2be96d"
+git-tree-sha1 = "d9b6026e85b661c0cebdbbdb0d2df11f419ccfb8"
 repo-rev = "master"
 repo-url = "https://github.com/FluxML/Zygote.jl.git"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"

@@ -1,40 +1,46 @@
 # using OMEinsum
 using BackwardsLinalg
 
-function trg(k, χ, niter)
-    D = 2
-    inds = 1:D
-    M = [sqrt(cosh(k)) sqrt(sinh(k)) ; sqrt(cosh(k)) -sqrt(sinh(k))]
-    T = einsum("ij,ik,il,im -> jklm", (M,M,M,M))
+@doc raw"
+    trg(a, χ, niter)
+return the partition-function of a two-dimensional system of size `2^niter`
+described by the tensor `a` calculated via the tensor renormalization group
+algorithm.
+`a` is a rank-4 tensor with the following indices:
 
-    lnZ = zero(k)
+        |1
+    4--[a]--2
+       3|
+"
+function trg(a::AbstractArray{T,4}, χ, niter) where T
+    lnZ = zero(T)
     for n in 1:niter
-        maxval = maximum(T)
-        T /= maxval
+        maxval = maximum(a)
+        a /= maxval
         lnZ += 2^(niter-n+1)*log(maxval)
 
-        d2 = size(T,1)^2
-        Ma = reshape(einsum("ijkl -> kjil", (T,),), d2, d2)
-        Mb = reshape(einsum("ijkl -> lkji", (T,)), d2, d2)
-        s1, s3 = trg_svd(Ma, χ)
-        s2, s4 = trg_svd(Mb, χ)
+        dr_ul = einsum("urdl -> drul", (a,))
+        ld_ru = einsum("urdl -> ldru", (a,))
+        dr, ul = trg_svd(dr_ul, χ)
+        ld, ru = trg_svd(ld_ru, χ)
 
-        T = einsum("npi,poj,kom,lmn -> ijkl", (s1,s2,s3,s4))
+        a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
     end
-    trace = einsum("ijij -> ", (T,))[]
+    trace = einsum("ijij -> ", (a,))[]
     lnZ += log(trace)
     return lnZ
 end
 
 
-function trg_svd(Ma, Dmax; tol::Float64=1e-12)
-    U, S, V = svd(Ma)
-    Dmax = min(searchsortedfirst(S, tol, rev=true), Dmax)
-    D = isqrt(size(Ma, 1))
-    FS = S[1:Dmax]
+function trg_svd(t, dmax; tol::Float64=1e-12)
+    d1, d2, d3, d4 = size(t)
+    tmat = reshape(t, d1*d2, d3*d4)
+    u, s, v = svd(tmat)
+    dmax = min(searchsortedfirst(s, tol, rev=true), dmax)
+    FS = s[1:dmax]
     sqrtFSp = sqrt.(FS)
-    S1 = reshape(einsum("ij,j -> ij", (U[:,1:Dmax],  sqrtFSp)), (D, D, Dmax))
-    S3 = reshape(einsum("ij,i -> ij", (copy(V')[1:Dmax,:], sqrtFSp)), (Dmax, D, D))
+    u = reshape(einsum("ij,j -> ij", (u[:,1:dmax],  sqrtFSp)), (d1, d2, dmax))
+    v = reshape(einsum("ij,i -> ij", (copy(v'[1:dmax,:]), sqrtFSp)), (dmax, d3, d4))
 
-    S1, S3
+    return u, v
 end

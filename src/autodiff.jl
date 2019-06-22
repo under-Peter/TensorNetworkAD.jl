@@ -1,5 +1,9 @@
 using Zygote
 
+@Zygote.adjoint function Base.typed_hvcat(::Type{T}, rows::Tuple{Vararg{Int}}, xs::S...) where {T,S}
+  Base.typed_hvcat(T,rows, xs...), ȳ -> (nothing, nothing, permutedims(ȳ)...)
+end
+
 @doc raw"
     num_grad(f, K::Real; [δ = 1e-5])
 return the numerical gradient of `f` at `K` calculated with

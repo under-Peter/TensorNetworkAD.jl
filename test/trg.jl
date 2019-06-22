@@ -1,11 +1,12 @@
 using TensorNetworkAD
 using Test
 using Zygote
+using TensorNetworkAD: isingtensor
 
 @testset "trg" begin
     χ = 5
     niter = 5
-    foo = x -> trg(x, χ, niter)
+    foo = β -> trg(isingtensor(β), χ, niter)
     # the pytorch result with tensorgrad
     # https://github.com/wangleiphy/tensorgrad
     # clone this repo and type

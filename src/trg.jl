@@ -12,7 +12,7 @@ algorithm.
     4--[a]--2
        3|
 "
-function trg(a::AbstractArray{T,4}, χ, niter) where T
+function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
     lnZ = zero(T)
     for n in 1:niter
         maxval = maximum(a)
@@ -21,8 +21,8 @@ function trg(a::AbstractArray{T,4}, χ, niter) where T
 
         dr_ul = einsum("urdl -> drul", (a,))
         ld_ru = einsum("urdl -> ldru", (a,))
-        dr, ul = trg_svd(dr_ul, χ)
-        ld, ru = trg_svd(ld_ru, χ)
+        dr, ul = trg_svd(dr_ul, χ, tol)
+        ld, ru = trg_svd(ld_ru, χ, tol)
 
         a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
     end
@@ -32,11 +32,11 @@ function trg(a::AbstractArray{T,4}, χ, niter) where T
 end
 
 
-function trg_svd(t, dmax; tol::Float64=1e-12)
+function trg_svd(t, dmax, tol)
     d1, d2, d3, d4 = size(t)
     tmat = reshape(t, d1*d2, d3*d4)
     u, s, v = svd(tmat)
-    dmax = min(searchsortedfirst(s, tol, rev=true), dmax)
+    dmax = min(searchsortedfirst(s, tol, rev=true), dmax, length(s))
     FS = s[1:dmax]
     sqrtFSp = sqrt.(FS)
     u = reshape(einsum("ij,j -> ij", (u[:,1:dmax],  sqrtFSp)), (d1, d2, dmax))

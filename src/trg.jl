@@ -40,7 +40,7 @@ function trg_svd(t, dmax, tol)
     FS = s[1:dmax]
     sqrtFSp = sqrt.(FS)
     u = reshape(einsum("ij,j -> ij", (u[:,1:dmax],  sqrtFSp)), (d1, d2, dmax))
-    v = reshape(einsum("ij,i -> ij", (copy(v'[1:dmax,:]), sqrtFSp)), (dmax, d3, d4))
+    v = reshape(einsum("ij,i -> ij", (copy(v')[1:dmax,:], sqrtFSp)), (dmax, d3, d4))
 
     return u, v
 end

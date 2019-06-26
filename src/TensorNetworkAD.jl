@@ -8,6 +8,7 @@ export ctmrg
 include("trg.jl")
 include("ctmrg.jl")
 include("autodiff.jl")
+include("variationalipeps.jl")
 include("exampletensors.jl")
 
 end # module

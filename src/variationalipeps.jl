@@ -32,6 +32,14 @@ function tfisinghamiltonian(hx::Float64 = 1.0)
         hx/2 * einsum("ij,kl -> ijkl", (id2, σx))
 end
 
+function heisenberghamiltonian(;Jz::Float64 = 1.0, Jx::Float64 = 1.0, Jy::Float64 = 1.0)
+    h = Jz * einsum("ij,kl -> ijkl", (σz,σz)) -
+        Jx * einsum("ij,kl -> ijkl", (σx, σx)) -
+        Jy * einsum("ij,kl -> ijkl", (σy, σy))
+    h = einsum("ijcd,kc,ld -> ijkl", (h,σx,σx'))
+    real(h ./ 2)
+end
+
 function energy(h, t, χ, tol, maxit)
     t = rotsymmetrize(t)
     d = size(t,1)

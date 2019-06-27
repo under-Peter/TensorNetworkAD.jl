@@ -1,7 +1,7 @@
 using Test
 using TensorNetworkAD
 using TensorNetworkAD: diaglocalhamiltonian, energy, expectationvalue, optimiseipeps,
-                       tfisinghamiltonian
+                       tfisinghamiltonian, heisenberghamiltonian
 using OMEinsum
 using LinearAlgebra: svd
 
@@ -52,6 +52,7 @@ using LinearAlgebra: svd
         e = energy(h,res.minimizer, 10,0,300)
         @test isapprox(e,-1, atol=1e-3)
 
+        # comparison with results from https://github.com/wangleiphy/tensorgrad
         h = tfisinghamiltonian(1.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
@@ -69,5 +70,26 @@ using LinearAlgebra: svd
         res = optimiseipeps(a, h, 5, 0, 100)
         e = energy(h,res.minimizer, 5,0,100)
         @test isapprox(e, -2.5113, atol = 1e-3)
+    end
+
+    @testset "heisenberg" begin
+        # comparison with results from https://github.com/wangleiphy/tensorgrad
+        h = heisenberghamiltonian(Jz = 1.)
+        a = randn(2,2,2,2,2)
+        res = optimiseipeps(a, h, 5, 0, 100)
+        e = energy(h,res.minimizer, 5,0,200)
+        @test isapprox(e, -0.66023, atol = 1e-3)
+
+        h = heisenberghamiltonian(Jx = 2., Jy = 2.)
+        a = randn(2,2,2,2,2)
+        res = optimiseipeps(a, h, 5, 0, 100)
+        e = energy(h,res.minimizer, 5,0,100)
+        @test isapprox(e, -1.190, atol = 1e-2)
+
+        h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
+        a = randn(2,2,2,2,2)
+        res = optimiseipeps(a, h, 5, 0, 100)
+        e = energy(h,res.minimizer, 5,0,100)
+        @test isapprox(e, -1.0208, atol = 1e-3)
     end
 end

@@ -1,6 +1,11 @@
 using Optim
 using LinearAlgebra: I
 
+const σx = [0 1; 1 0]
+const σy = [0 -1im; 1im 0]
+const σz = [1 0; 0 -1]
+const id2 = [1 0; 0 1]
+
 function rotsymmetrize(x::AbstractArray{<:Any,5})
     (x + permutedims(x, (2,3,4,1,5))
        + permutedims(x, (3,4,1,2,5))
@@ -19,6 +24,12 @@ function diaglocalhamiltonian(diag::Vector)
     h = einsum("i -> ii", (diag,))
     id = Matrix(I,n,n)
     reshape(h,n,n,1,1) .* reshape(id,1,1,n,n) .+ reshape(h,1,1,n,n) .* reshape(id,n,n,1,1)
+end
+
+function tfisinghamiltonian(hx::Float64 = 1.0)
+    -2 * einsum("ij,kl -> ijkl", (σz,σz)) -
+        hx/2 * einsum("ij,kl -> ijkl", (σx, id2)) -
+        hx/2 * einsum("ij,kl -> ijkl", (id2, σx))
 end
 
 function energy(h, t, χ, tol, maxit)

@@ -9,19 +9,23 @@ using LinearAlgebra: svd
     @testset "non-interacting" begin
         h = diaglocalhamiltonian([1,-1])
         as = (rand(3,3,3,3,2) for _ in 1:100)
+        next!(p)
         @test all(a -> -1 < energy(h,a,5,0,10)/2 < 1, as)
 
         h = diaglocalhamiltonian([1,-1])
         a = zeros(2,2,2,2,2)
         a[1,1,1,1,2] = randn()
+        next!(p)
         @test energy(h,a,10,0,300)/2 ≈ -1
 
         a = zeros(2,2,2,2,2)
         a[1,1,1,1,1] = randn()
+        next!(p)
         @test energy(h,a,10,0,300)/2 ≈ 1
 
         a = zeros(2,2,2,2,2)
         a[1,1,1,1,2] = a[1,1,1,1,1] = randn()
+        next!(p)
         @test abs(energy(h,a,10,0,300)) < 1e-9
 
 
@@ -30,6 +34,7 @@ using LinearAlgebra: svd
         a = randn(2,2,2,2,3)
         res = optimiseipeps(a, h, 4, 0, 100)
         e = minimum(res)/2
+        next!(p)
         @test isapprox(e, minimum(hdiag), atol=1e-3)
     end
 
@@ -40,6 +45,7 @@ using LinearAlgebra: svd
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 4, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e,-1, atol=1e-3)
 
         h = zeros(2,2,2,2)
@@ -50,6 +56,7 @@ using LinearAlgebra: svd
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e,-1, atol=1e-3)
 
         # comparison with results from https://github.com/wangleiphy/tensorgrad
@@ -57,18 +64,21 @@ using LinearAlgebra: svd
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -2.12566, atol = 1e-3)
 
         h = tfisinghamiltonian(0.5)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -2.0312, atol = 1e-2)
 
         h = tfisinghamiltonian(2.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -2.5113, atol = 1e-3)
     end
 
@@ -78,18 +88,21 @@ using LinearAlgebra: svd
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -0.66023, atol = 1e-3)
 
         h = heisenberghamiltonian(Jx = 2., Jy = 2.)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -1.190, atol = 1e-2)
 
         h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100)
         e = minimum(res)
+        next!(p)
         @test isapprox(e, -1.0208, atol = 1e-3)
     end
 end

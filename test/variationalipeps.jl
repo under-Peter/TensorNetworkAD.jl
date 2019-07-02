@@ -1,7 +1,8 @@
 using Test
 using TensorNetworkAD
 using TensorNetworkAD: diaglocalhamiltonian, energy, expectationvalue, optimiseipeps,
-                       tfisinghamiltonian, heisenberghamiltonian
+                       tfisinghamiltonian, heisenberghamiltonian,
+                       rotsymmetrize, isrotsym
 using OMEinsum
 using LinearAlgebra: svd
 
@@ -104,5 +105,25 @@ using LinearAlgebra: svd
         e = minimum(res)
         next!(p)
         @test isapprox(e, -1.0208, atol = 1e-3)
+    end
+
+    @testset "utils" begin
+        a = randn(3,3,3,3,3)
+        @test !isrotsym(a)
+        a = rotsymmetrize(a)
+        @test isrotsym(a)
+    end
+
+    @testset "gradient" begin
+        h = heisenberghamiltonian()
+        a = randn(2,2,2,2,2)
+        gradzygote = first(Zygote.gradient(a) do a
+            TensorNetworkAD.energy(h,a,4,0,300)
+        end)
+        gradnum = TensorNetworkAD.num_grad(a, δ=1e-8) do x
+            TensorNetworkAD.energy(h,x,4,0,300)
+        end
+
+        isapprox(gradzygote, gradnum, atol=1e-5)
     end
 end

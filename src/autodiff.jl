@@ -17,6 +17,7 @@ return the numerical gradient of `f` for each element of `K`.
 "
 function num_grad(f, a::AbstractArray; δ::Real = 1e-5)
     map(CartesianIndices(a)) do i
-        num_grad(a[i], x -> (ac = copy(a); ac[i] = x; f(ac)), δ)
+        foo = x -> (ac = copy(a); ac[i] = x; f(ac))
+        num_grad(foo, a[i], δ = δ)
     end
 end

@@ -3,7 +3,7 @@ using TensorNetworkAD
 using TensorNetworkAD: diaglocalhamiltonian, energy, expectationvalue, optimiseipeps,
                        tfisinghamiltonian, heisenberghamiltonian,
                        rotsymmetrize, isrotsym, num_grad
-using OMEinsum
+using OMEinsum, Zygote, Random
 using LinearAlgebra: svd, norm
 
 @testset "variationalipeps" begin
@@ -117,16 +117,17 @@ using LinearAlgebra: svd, norm
     end
 
     @testset "gradient" begin
+        Random.seed!(0)
         h = heisenberghamiltonian()
-        a = randn(2,2,2,2,2)
+        a = rotsymmetrize(randn(2,2,2,2,2))
         gradzygote = first(Zygote.gradient(a) do x
-            energy(h,x,4,0,200)
+            energy(h,x,4,0,100)
         end)
-        gradnum = num_grad(a, δ=1e-6) do x
-            energy(h,x,4,0,200)
+        gradnum = num_grad(a, δ=1e-3) do x
+            energy(h,x,4,0,100)
         end
 
         next!(pmobj)
-        @test_broken isapprox(gradzygote, gradnum, atol=1e-3)
+        @test isapprox(gradzygote, gradnum, atol=1e-3)
     end
 end

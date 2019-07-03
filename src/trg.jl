@@ -17,7 +17,7 @@ function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
     for n in 1:niter
         maxval = maximum(a)
         a /= maxval
-        lnZ += 2^(niter-n+1)*log(maxval)
+        lnZ += 2.0^(1-n)*log(maxval)
 
         dr_ul = einsum("urdl -> drul", (a,))
         ld_ru = einsum("urdl -> ldru", (a,))
@@ -27,7 +27,7 @@ function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
         a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
     end
     trace = einsum("ijij -> ", (a,))[]
-    lnZ += log(trace)
+    lnZ += log(trace)/2.0^niter
     return lnZ
 end
 

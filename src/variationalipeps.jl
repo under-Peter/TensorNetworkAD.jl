@@ -60,9 +60,9 @@ function expectationvalue(h, a, (c,t))
     return e/n
 end
 
-function optimiseipeps(t, h, χ, tol, maxit; optimargs = ())
+function optimiseipeps(t, h, χ, tol, maxit; optimargs = (), optimmethod = LBFGS())
     let energy = x -> energy(h, x, χ, tol, maxit)
         res = optimize(energy,
-            Δ -> Zygote.gradient(energy,Δ)[1], t, LBFGS(), inplace = false, optimargs...)
+            Δ -> Zygote.gradient(energy,Δ)[1], t, optimmethod, inplace = false, optimargs...)
     end
 end

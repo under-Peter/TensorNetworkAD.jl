@@ -4,6 +4,8 @@ using OMEinsum
 
 export trg, num_grad
 export ctmrg
+export optimiseipeps
+export heisenberghamiltonian, isinghamiltonian, isingtensor
 
 include("trg.jl")
 include("ctmrg.jl")

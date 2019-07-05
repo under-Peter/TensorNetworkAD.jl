@@ -24,10 +24,10 @@ uuid = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
 version = "0.8.10"
 
 [[BinaryProvider]]
-deps = ["Libdl", "SHA"]
-git-tree-sha1 = "c7361ce8a2129f20b0e05a89f7070820cfed6648"
+deps = ["Libdl", "Logging", "SHA"]
+git-tree-sha1 = "8153fd64131cd00a79544bb23788877741f627bb"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.4"
+version = "0.5.5"
 
 [[CSTParser]]
 deps = ["Tokenize"]
@@ -81,9 +81,9 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DiffEqDiffTools]]
 deps = ["LinearAlgebra", "SparseArrays", "StaticArrays"]
-git-tree-sha1 = "c83f4ce45d4b723f9d21b9ea3d314a503fd40def"
+git-tree-sha1 = "2d4f49c1839c1f30e4820400d8c109c6b16e869a"
 uuid = "01453d9d-ee7c-5054-8395-0335cb756afa"
-version = "0.12.0"
+version = "0.13.0"
 
 [[DiffResults]]
 deps = ["Compat", "StaticArrays"]
@@ -298,9 +298,9 @@ uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[StatsBase]]
 deps = ["DataStructures", "LinearAlgebra", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics"]
-git-tree-sha1 = "8a0f4b09c7426478ab677245ab2b0b68552143c7"
+git-tree-sha1 = "2b6ca97be7ddfad5d9f16a13fe277d29f3d11c23"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.30.0"
+version = "0.31.0"
 
 [[Strided]]
 deps = ["LinearAlgebra", "TupleTools"]

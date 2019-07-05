@@ -1,4 +1,4 @@
-using Optim
+using Optim, LineSearches
 using LinearAlgebra: I
 
 const σx = [0 1; 1 0]
@@ -60,7 +60,9 @@ function expectationvalue(h, a, (c,t))
     return e/n
 end
 
-function optimiseipeps(t, h, χ, tol, maxit; optimargs = (), optimmethod = LBFGS())
+function optimiseipeps(t, h, χ, tol, maxit;
+        optimargs = (),
+        optimmethod = LBFGS(m = 20))
     let energy = x -> energy(h, x, χ, tol, maxit)
         res = optimize(energy,
             Δ -> Zygote.gradient(energy,Δ)[1], t, optimmethod, inplace = false, optimargs...)

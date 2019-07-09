@@ -35,7 +35,7 @@ using Optim
         h = diaglocalhamiltonian(hdiag)
         a = randn(2,2,2,2,3)
         res = optimiseipeps(a, h, 4, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)/2
         next!(pmobj)
         @test isapprox(e, minimum(hdiag), atol=1e-3)
@@ -47,7 +47,7 @@ using Optim
         h[2,2,2,2] = h[1,1,1,1] = -1
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 4, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
@@ -59,7 +59,7 @@ using Optim
         h = einsum("abcd,ai,bj,ck,dl -> ijkl", (h,randu,randu',randu,randu'))
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
@@ -68,7 +68,7 @@ using Optim
         h = tfisinghamiltonian(1.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -2.12566, atol = 1e-3)
@@ -76,7 +76,7 @@ using Optim
         h = tfisinghamiltonian(0.5)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -2.0312, atol = 1e-2)
@@ -84,7 +84,7 @@ using Optim
         h = tfisinghamiltonian(2.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -2.5113, atol = 1e-3)
@@ -95,7 +95,7 @@ using Optim
         h = heisenberghamiltonian(Jz = 1.)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=true),))
+            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -0.66023, atol = 1e-3)
@@ -104,7 +104,7 @@ using Optim
         h = heisenberghamiltonian(Jx = 2., Jy = 2.)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 6, 0, 100, #optimmethod = Optim.LBFGS(),
-            optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true),))
+            optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -1.190, atol = 1e-2)
@@ -112,7 +112,7 @@ using Optim
         h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
         a = randn(2,2,2,2,2)
         res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true),))
+            optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -1.0208, atol = 1e-3)

@@ -24,7 +24,7 @@ end
 function magnetisationofβ(β, χ)
     a = isingtensor(β)
     m = isingmagtensor(β)
-    c, t, = TensorNetworkAD.ctmrg(a, χ, 1e-6, 100)
+    c, t, = ctmrg(a, χ, 1e-6, 100, true)
     ctc  = einsum("ia,ajb,bk -> ijk", (c,t,c))
     env  = einsum("alc,ckd,bjd,bia -> ijkl",(ctc,t,ctc,t))
     mag  = einsum("ijkl,ijkl ->", (env,m))[]

@@ -58,7 +58,7 @@ using Optim
         randu, s,  = svd(randn(2,2))
         h = einsum("abcd,ai,bj,ck,dl -> ijkl", (h,randu,randu',randu,randu'))
         a = randn(2,2,2,2,2)
-        res = optimiseipeps(a, h, 5, 0, 100,
+        res = optimiseipeps(a, h, 6, 0, 200,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         next!(pmobj)

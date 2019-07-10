@@ -8,6 +8,7 @@ export optimiseipeps
 export heisenberghamiltonian, isinghamiltonian, isingtensor
 
 include("trg.jl")
+include("fixedpoint.jl")
 include("ctmrg.jl")
 include("autodiff.jl")
 include("variationalipeps.jl")

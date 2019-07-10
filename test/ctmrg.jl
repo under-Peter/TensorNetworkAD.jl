@@ -21,11 +21,6 @@ using Zygote
 
     foo = x -> magnetisationofβ(x,2)
     next!(pmobj)
-    @test Zygote.gradient(foo,0.5)[1] ≈ num_grad(foo,0.5)
+    @test isapprox(Zygote.gradient(foo,0.5)[1], num_grad(foo,0.5), atol = 1e-2)
 
-    # Random.seed!(2)
-    # χ = 5
-    # niter = 5
-    # $ python 2_variational_iPEPS/variational.py -model TFIM -D 3 -chi 10 -Niter 10 -Nepochs 10
-    # @test_broken isapprox(ctmrg(:TFIM; nepochs=10, χ=10, D=3, niter=10).E, -2.1256619, atol=1e-5)
 end

@@ -46,7 +46,7 @@ function energy(h, t, χ, tol, maxit)
     ap = einsum("abcdx,ijkly -> aibjckdlxy", (t, conj(t)))
     ap = reshape(ap, d^2, d^2, d^2, d^2, size(t,5), size(t,5))
     a = einsum("ijklaa -> ijkl", (ap,))
-    c, t, vals = ctmrg(a, χ, tol, maxit)
+    c, t = ctmrg(a, χ, tol, maxit)
 
     return expectationvalue(h, ap, (c,t))
 end

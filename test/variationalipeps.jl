@@ -81,10 +81,11 @@ using Optim
         next!(pmobj)
         @test isapprox(e, -2.0312, atol = 1e-2)
 
+        Random.seed!(0)
         h = tfisinghamiltonian(2.0)
         a = randn(2,2,2,2,2)
-        res = optimiseipeps(a, h, 5, 0, 100,
-            optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
+        res = optimiseipeps(a, h, 6, 1e-9, 100,
+            optimargs = (Optim.Options(f_tol=1e-8, show_trace=false),))
         e = minimum(res)
         next!(pmobj)
         @test isapprox(e, -2.5113, atol = 1e-3)

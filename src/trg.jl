@@ -24,7 +24,10 @@ function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
         dr, ul = trg_svd(dr_ul, χ, tol)
         ld, ru = trg_svd(ld_ru, χ, tol)
 
-        a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
+        # a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
+        drld = einsum("npu,por -> nuor", (dr, ld))
+        drldul = einsum("nuor,dom -> nurdm", (drld, ul))
+        a = einsum("nurdm, lmn -> urdl", (drldul, ru))
     end
     trace = einsum("ijij -> ", (a,))[]
     lnZ += log(trace)/2.0^niter

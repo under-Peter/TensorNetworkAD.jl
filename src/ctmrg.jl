@@ -1,5 +1,5 @@
 using BackwardsLinalg, OMEinsum
-using LinearAlgebra: normalize, norm
+using LinearAlgebra: normalize, norm, diag
 using Random
 using IterTools: iterated
 using Base.Iterators: take, drop
@@ -39,28 +39,40 @@ function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
     # initialize
     cinit = initializec(a, χ, randinit)
     tinit = initializet(a, χ, randinit)
-    oldvals = fill(Inf, χ)
+    oldvals = fill(Inf, χ*d)
 
-    stopfun = StopFunction(oldvals, 0, tol, maxit)
+    stopfun = StopFunction(oldvals, -1, tol, maxit)
     c, t, = fixedpoint(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
     return c, t
 end
 
 function ctmrgstep((c,t,vals), (a, χ, d))
     # grow
-    cp = einsum("ab,ica,bdl,jkdc -> ijkl", (c, t, t, a))
+    # cp = einsum("ad,iba,dcl,jkcb -> ijlk", (c, t, t, a))
+    ct = einsum("ad,iba -> dib", (c,t))
+    ctt = einsum("dib,dcl -> bcil", (ct,t))
+    ctta = einsum("bcil, jkcb -> ijlk", (ctt,a))
+    cp = ctta
     tp = einsum("iam,jkla -> ijklm", (t,a))
 
     # renormalize
     cpmat = reshape(cp, χ*d, χ*d)
     u, s, v = svd(cpmat)
     z = reshape(u[:, 1:χ], χ, d, χ)
-    c = einsum("abcd,abi,dcj -> ij", (cp, conj(z), z))
-    t = einsum("abjcd,abi,dck -> ijk", (tp, conj(z), z))
-    vals = s[1:χ] ./ s[1]
+
+    # c = einsum("abcd,abi,cdj -> ij", (cp, conj(z), z))
+    cz = einsum("abcd,abi -> cdi", (cp, conj(z)))
+    c = einsum("cdi,cdj -> ij", (cz, z))
+
+    # t = einsum("abjcd,abi,dck -> ijk", (tp, conj(z), z))
+    tz = einsum("abjcd,abi -> ijcd", (tp, conj(z)))
+    t = einsum("ijcd,dck -> ijk", (tz,z))
+
+    vals = s ./ s[1]
 
     # symmetrize & normalize
-    c += transpose(c)
+    c *= c[1] / abs(c[1])
+    c += permutedims(c)
     t += permutedims(t, (3,2,1))
     c /= norm(c)
     t /= norm(t)

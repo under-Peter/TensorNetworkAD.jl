@@ -21,8 +21,8 @@ function (st::StopFunction)(state)
     st.counter > st.maxit && return true
 
     vals = state[3]
-    diff = sum(abs, vals - st.oldvals)
-    sum(abs, vals - st.oldvals) <= st.tol && return true
+    diff = norm(vals - st.oldvals)
+    diff <= st.tol && return true
     st.oldvals = vals
 
     return false

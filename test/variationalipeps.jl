@@ -2,7 +2,7 @@ using Test
 using TensorNetworkAD
 using TensorNetworkAD: diaglocalhamiltonian, energy, expectationvalue, optimiseipeps,
                        tfisinghamiltonian, heisenberghamiltonian,
-                       rotsymmetrize, isrotsym, num_grad
+                       symmetrize, num_grad
 using OMEinsum, Zygote, Random
 using LinearAlgebra: svd, norm
 using Optim
@@ -11,23 +11,23 @@ using Optim
     @testset "non-interacting" begin
         h = diaglocalhamiltonian([1,-1])
         as = (rand(3,3,3,3,2) for _ in 1:100)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test all(a -> -1 < energy(h,a,5,0,10)/2 < 1, as)
 
         h = diaglocalhamiltonian([1,-1])
-        a = zeros(2,2,2,2,2)
+        a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,2] = randn()
-        next!(pmobj)
-        @test energy(h,a,10,0,300)/2 ≈ -1
+        @isdefined(pmobj) && next!(pmobj)
+        @test energy(h,a,4,1e-12,100)/2 ≈ -1
 
-        a = zeros(2,2,2,2,2)
+        a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,1] = randn()
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test energy(h,a,10,0,300)/2 ≈ 1
 
-        a = zeros(2,2,2,2,2)
+        a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,2] = a[1,1,1,1,1] = randn()
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test abs(energy(h,a,10,0,300)) < 1e-9
 
 
@@ -37,7 +37,7 @@ using Optim
         res = optimiseipeps(a, h, 4, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)/2
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, minimum(hdiag), atol=1e-3)
     end
 
@@ -49,7 +49,7 @@ using Optim
         res = optimiseipeps(a, h, 4, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
 
         h = zeros(2,2,2,2)
@@ -61,7 +61,7 @@ using Optim
         res = optimiseipeps(a, h, 6, 0, 200,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
 
         # comparison with results from https://github.com/wangleiphy/tensorgrad
@@ -70,7 +70,7 @@ using Optim
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.12566, atol = 1e-3)
 
         h = tfisinghamiltonian(0.5)
@@ -78,7 +78,7 @@ using Optim
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.0312, atol = 1e-2)
 
         Random.seed!(0)
@@ -87,7 +87,7 @@ using Optim
         res = optimiseipeps(a, h, 6, 1e-9, 100,
             optimargs = (Optim.Options(f_tol=1e-8, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.5113, atol = 1e-3)
     end
 
@@ -98,7 +98,7 @@ using Optim
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -0.66023, atol = 1e-3)
 
         # Random.seed!(0)
@@ -107,7 +107,7 @@ using Optim
         res = optimiseipeps(a, h, 6, 0, 100, #optimmethod = Optim.LBFGS(),
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -1.190, atol = 1e-2)
 
         h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
@@ -115,14 +115,14 @@ using Optim
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -1.0208, atol = 1e-3)
     end
 
     @testset "gradient" begin
         Random.seed!(0)
         h = heisenberghamiltonian()
-        a = rotsymmetrize(randn(2,2,2,2,2))
+        a = symmetrize(randn(2,2,2,2,2))
         gradzygote = first(Zygote.gradient(a) do x
             energy(h,x,4,0,100)
         end)
@@ -130,7 +130,7 @@ using Optim
             energy(h,x,4,0,100)
         end
 
-        next!(pmobj)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(gradzygote, gradnum, atol=1e-3)
     end
 end

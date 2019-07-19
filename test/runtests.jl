@@ -1,5 +1,5 @@
 using ProgressMeter
-pmobj = Progress(25, )
+pmobj = Progress(23, )
 using TensorNetworkAD
 using Test
 using Random

@@ -42,7 +42,7 @@ function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
     oldvals = fill(Inf, χ*d)
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
-    c, t, = fixedpoint(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
+    c, t, = fixedpointAD(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
     return c, t
 end
 
@@ -70,10 +70,18 @@ function ctmrgstep((c,t,vals), (a, χ, d))
 
     vals = s ./ s[1]
 
-    # symmetrize & normalize
-    c *= c[1] / abs(c[1])
+
+    # symmetrize
     c += permutedims(c)
     t += permutedims(t, (3,2,1))
+
+    #gauge fix
+    c *= sign(c[1])
+    signs = sign.(t[:,2,1])
+    # t = einsum("i,ijk,k -> ijk", (signs, t, signs))
+    t = t .* reshape(signs,:,1,1) .* reshape(signs,1,1,:)
+
+    # normalize
     c /= norm(c)
     t /= norm(t)
 

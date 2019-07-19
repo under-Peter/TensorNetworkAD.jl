@@ -119,15 +119,6 @@ using Optim
         @test isapprox(e, -1.0208, atol = 1e-3)
     end
 
-    @testset "utils" begin
-        a = randn(3,3,3,3,3)
-        next!(pmobj)
-        @test !isrotsym(a)
-        a = rotsymmetrize(a)
-        next!(pmobj)
-        @test isrotsym(a)
-    end
-
     @testset "gradient" begin
         Random.seed!(0)
         h = heisenberghamiltonian()

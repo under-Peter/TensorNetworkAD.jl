@@ -71,7 +71,7 @@ end
 function optimiseipeps(t, h, χ, tol, maxit;
         optimargs = (),
         optimmethod = LBFGS(m = 20))
-    let energy = x -> energy(h, x, χ, tol, maxit)
+    let energy = x -> real(energy(h, x, χ, tol, maxit))
         res = optimize(energy,
             Δ -> Zygote.gradient(energy,Δ)[1], t, optimmethod, inplace = false, optimargs...)
     end

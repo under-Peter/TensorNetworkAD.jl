@@ -42,7 +42,7 @@ function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
     oldvals = fill(Inf, χ*d)
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
-    c, t, = fixedpointAD(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
+    c, t, = fixedpoint(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
     return c, t
 end
 

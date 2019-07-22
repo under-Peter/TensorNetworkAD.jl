@@ -15,7 +15,7 @@ algorithm.
 function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
     lnZ = zero(T)
     for n in 1:niter
-        maxval = maximum(a)
+        maxval = maximum(abs.(a))
         a /= maxval
         lnZ += 2.0^(1-n)*log(maxval)
 

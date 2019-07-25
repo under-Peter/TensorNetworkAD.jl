@@ -8,7 +8,7 @@ function initializec(a, χ, randinit)
     c = zeros(eltype(a), χ, χ)
     if randinit
         rand!(c)
-        c += transpose(c)
+        c += adjoint(c)
     else
         cinit = einsum("ijkl -> ij", (a,))
         foreach(CartesianIndices(cinit)) do i
@@ -22,7 +22,7 @@ function initializet(a, χ, randinit)
     t = zeros(eltype(a), χ, size(a,1), χ)
     if randinit
         rand!(t)
-        t += permutedims(t, (3,2,1))
+        t += permutedims(conj(t), (3,2,1))
     else
         tinit = einsum("ijkl -> ijk", (a,))
         foreach(CartesianIndices(tinit)) do i
@@ -57,6 +57,7 @@ function ctmrgstep((c,t,vals), (a, χ, d))
 
     # renormalize
     cpmat = reshape(cp, χ*d, χ*d)
+    cpmat += adjoint(cpmat)
     u, s, v = svd(cpmat)
     z = reshape(u[:, 1:χ], χ, d, χ)
 
@@ -72,8 +73,8 @@ function ctmrgstep((c,t,vals), (a, χ, d))
 
 
     # symmetrize
-    c += permutedims(c)
-    t += permutedims(t, (3,2,1))
+    c += adjoint(c)
+    t += permutedims(conj(t), (3,2,1))
 
     #gauge fix
     c *= sign(c[1])

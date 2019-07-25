@@ -133,4 +133,36 @@ using Optim
         @isdefined(pmobj) && next!(pmobj)
         @test isapprox(gradzygote, gradnum, atol=1e-3)
     end
+
+    @testset "complex" begin
+        h = heisenberghamiltonian()
+        a = symmetrize(randn(2,2,2,2,2))
+        @isdefined(pmobj) && next!(pmobj)
+        @test energy(h,a,4,1e-12,100) ≈ energy(h,a .+ 0im,4,1e-12,100)
+        ϕ = exp(1im * rand()* 2π)
+        @isdefined(pmobj) && next!(pmobj)
+        @test energy(h,a .* ϕ,4,1e-12,100) ≈ energy(h,a,4,1e-12,100)
+
+        gradzygote = first(Zygote.gradient(a) do x
+            real(energy(h,x,4,1e-12,100))
+        end)
+
+        @isdefined(pmobj) && next!(pmobj)
+        @test gradzygote ≈ first(Zygote.gradient(a .+ 0im) do x
+            real(energy(h,x,4,1e-12,100))
+        end)
+
+        # real
+        h = heisenberghamiltonian()
+        a = symmetrize(randn(2,2,2,2,2))
+        res1 = optimiseipeps(a, h, 10, 1e-12, 20,
+            optimargs = (Optim.Options(f_tol=1e-6, store_trace = true, show_trace=false),));
+
+        # complex
+        a = symmetrize(randn(2,2,2,2,2) .+ randn(2,2,2,2,2) .* 1im)
+        res2 = optimiseipeps(a, h, 20, 1e-12, 50,
+            optimargs = (Optim.Options(f_tol=1e-6,store_trace = true,  show_trace=false),));
+        @isdefined(pmobj) && next!(pmobj)
+        @test isapprox(minimum(res1), minimum(res2), atol = 1e-5)
+    end
 end

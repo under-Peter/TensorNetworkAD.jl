@@ -4,7 +4,7 @@ using Zygote
 using TensorNetworkAD: isingtensor
 
 @testset "trg" begin
-    @testset "real"
+    @testset "real" begin
         χ, niter = 5, 5
         foo = β -> trg(isingtensor(β), χ, niter)
         # the pytorch result with tensorgrad

@@ -3,6 +3,7 @@ using LinearAlgebra: normalize, norm, diag
 using Random
 using IterTools: iterated
 using Base.Iterators: take, drop
+using Optim, LineSearches
 
 function initializec(a, χ, randinit)
     c = zeros(eltype(a), χ, χ)
@@ -10,7 +11,7 @@ function initializec(a, χ, randinit)
         rand!(c)
         c += adjoint(c)
     else
-        cinit = einsum("ijkl -> ij", (a,))
+        cinit = ein"ijkl -> ij"(a)
         foreach(CartesianIndices(cinit)) do i
             i in CartesianIndices(c) && (c[i] = cinit[i])
         end
@@ -24,7 +25,7 @@ function initializet(a, χ, randinit)
         rand!(t)
         t += permutedims(conj(t), (3,2,1))
     else
-        tinit = einsum("ijkl -> ijk", (a,))
+        tinit = ein"ijkl -> ijk"(a)
         foreach(CartesianIndices(tinit)) do i
             i in CartesianIndices(t) && (t[i] = tinit[i])
         end
@@ -48,12 +49,8 @@ end
 
 function ctmrgstep((c,t,vals), (a, χ, d))
     # grow
-    # cp = einsum("ad,iba,dcl,jkcb -> ijlk", (c, t, t, a))
-    ct = einsum("ad,iba -> dib", (c,t))
-    ctt = einsum("dib,dcl -> bcil", (ct,t))
-    ctta = einsum("bcil, jkcb -> ijlk", (ctt,a))
-    cp = ctta
-    tp = einsum("iam,jkla -> ijklm", (t,a))
+    cp = ein"((ad,iba),dcl),jkcb -> ijlk"(c, t, t, a)
+    tp = ein"iam,jkla -> ijklm"(t,a)
 
     # renormalize
     cpmat = reshape(cp, χ*d, χ*d)
@@ -61,13 +58,8 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     u, s, v = svd(cpmat)
     z = reshape(u[:, 1:χ], χ, d, χ)
 
-    # c = einsum("abcd,abi,cdj -> ij", (cp, conj(z), z))
-    cz = einsum("abcd,abi -> cdi", (cp, conj(z)))
-    c = einsum("cdi,cdj -> ij", (cz, z))
-
-    # t = einsum("abjcd,abi,dck -> ijk", (tp, conj(z), z))
-    tz = einsum("abjcd,abi -> ijcd", (tp, conj(z)))
-    t = einsum("ijcd,dck -> ijk", (tz,z))
+    c = ein"abcd,abi,cdj -> ij"(cp, conj(z), z)
+    t = ein"abjcd,abi,dck -> ijk"(tp, conj(z), z)
 
     vals = s ./ s[1]
 
@@ -79,7 +71,6 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     #gauge fix
     c *= sign(c[1])
     signs = sign.(t[:,2,1])
-    # t = einsum("i,ijk,k -> ijk", (signs, t, signs))
     t = t .* reshape(signs,:,1,1) .* reshape(signs,1,1,:)
 
     # normalize

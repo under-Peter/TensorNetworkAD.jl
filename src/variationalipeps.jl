@@ -23,31 +23,31 @@ end
 
 function diaglocalhamiltonian(diag::Vector)
     n = length(diag)
-    h = einsum("i -> ii", (diag,))
+    h = ein"i -> ii"(diag)
     id = Matrix(I,n,n)
     reshape(h,n,n,1,1) .* reshape(id,1,1,n,n) .+ reshape(h,1,1,n,n) .* reshape(id,n,n,1,1)
 end
 
 function tfisinghamiltonian(hx::Float64 = 1.0)
-    -2 * einsum("ij,kl -> ijkl", (σz,σz)) -
-        hx/2 * einsum("ij,kl -> ijkl", (σx, id2)) -
-        hx/2 * einsum("ij,kl -> ijkl", (id2, σx))
+    -2 * ein"ij,kl -> ijkl"(σz,σz) -
+        hx/2 * ein"ij,kl -> ijkl"(σx, id2) -
+        hx/2 * ein"ij,kl -> ijkl"(id2, σx)
 end
 
 function heisenberghamiltonian(;Jz::Float64 = 1.0, Jx::Float64 = 1.0, Jy::Float64 = 1.0)
-    h = Jz * einsum("ij,kl -> ijkl", (σz,σz)) -
-        Jx * einsum("ij,kl -> ijkl", (σx, σx)) -
-        Jy * einsum("ij,kl -> ijkl", (σy, σy))
-    h = einsum("ijcd,kc,ld -> ijkl", (h,σx,σx'))
+    h = Jz * ein"ij,kl -> ijkl"(σz,σz) -
+        Jx * ein"ij,kl -> ijkl"(σx, σx) -
+        Jy * ein"ij,kl -> ijkl"(σy, σy)
+    h = ein"ijcd,kc,ld -> ijkl"(h,σx,σx')
     real(h ./ 2)
 end
 
 function energy(h, tin, χ, tol, maxit)
     tin = symmetrize(tin)
     d = size(tin,1)
-    ap = einsum("abcdx,ijkly -> aibjckdlxy", (tin, conj(tin)))
+    ap = ein"abcdx,ijkly -> aibjckdlxy"(tin, conj(tin))
     ap = reshape(ap, d^2, d^2, d^2, d^2, size(tin,5), size(tin,5))
-    a = einsum("ijklaa -> ijkl", (ap,))
+    a = ein"ijklaa -> ijkl"(ap)
     c, t = ctmrg(a, χ, tol, maxit)
     e = expectationvalue(h, ap, (c,t))
 
@@ -55,16 +55,10 @@ function energy(h, tin, χ, tol, maxit)
 end
 
 function expectationvalue(h, a, (c,t))
-    # l = einsum("ab,ica,bde,cjfdlm,eg,gfk -> ijklm",(c,t,t,a,c,t))
     a /= norm(a)
-    ct = einsum("ij,aki -> jak",(c,t))
-    ctt = einsum("jak,jle -> akle",(ct,t))
-    ctta = einsum("akle,kbfldm -> abfedm",(ctt,a))
-    cttac = einsum("abfedm,eg -> abfgdm",(ctta,c))
-    cttact = einsum("abfgdm, gfc -> abcdm",(cttac,t))
-    l = cttact
-    e = einsum("abcij,abckl,ijkl -> ", (l,l,h))[]
-    n = einsum("ijkaa,ijkbb -> ", (l,l))[]
+    l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(c,t,t,a,c,t)
+    e = ein"abcij,abckl,ijkl -> "(l,l,h)[]
+    n = ein"ijkaa,ijkbb -> "(l,l)[]
     return e/n
 end
 

@@ -24,7 +24,7 @@ function initializet(a, χ, randinit)
         rand!(t)
         t += permutedims(conj(t), (3,2,1))
     else
-        tinit = einsum("ijkl -> ijk", (a,))
+        tinit = einsum("ijkl -> ijl", (a,))
         foreach(CartesianIndices(tinit)) do i
             i in CartesianIndices(t) && (t[i] = tinit[i])
         end

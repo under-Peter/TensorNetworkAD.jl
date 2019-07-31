@@ -14,13 +14,6 @@ function symmetrize(x::AbstractArray{<:Any,5})
     return x / norm(x)
 end
 
-function issym(x::AbstractArray{<:Any,5})
-    x ≈ permutedims(x, (2,3,4,1,5)) || return false
-    x ≈ permutedims(x, (3,4,1,2,5)) || return false
-    x ≈ permutedims(x, (4,1,2,3,5)) || return false
-    return true
-end
-
 function diaglocalhamiltonian(diag::Vector)
     n = length(diag)
     h = ein"i -> ii"(diag)

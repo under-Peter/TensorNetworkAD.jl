@@ -207,9 +207,7 @@ version = "0.3.2"
 
 [[OMEinsum]]
 deps = ["Combinatorics", "IRTools", "LinearAlgebra", "MacroTools", "PkgBenchmark", "Requires", "TensorOperations", "TupleTools", "Zygote"]
-git-tree-sha1 = "385e12265ef737c7c2386dd27a546ed2733e1dfe"
-repo-rev = "master"
-repo-url = "https://github.com/under-Peter/OMEinsum.jl.git"
+path = "/home/andreas/.julia/dev/OMEinsum"
 uuid = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 version = "0.2.0"
 

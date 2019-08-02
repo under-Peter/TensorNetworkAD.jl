@@ -49,7 +49,7 @@ end
 
 function ctmrgstep((c,t,vals), (a, χ, d))
     # grow
-    cp = ein"((ad,iba),dcl),jkcb -> ijlk"(c, t, t, a)
+    cp = ein"ad,iba,dcl,jkcb -> ijlk"(c, t, t, a)
     tp = ein"iam,jkla -> ijklm"(t,a)
 
     # renormalize
@@ -67,11 +67,6 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     # symmetrize
     c += adjoint(c)
     t += permutedims(conj(t), (3,2,1))
-
-    #gauge fix
-    c *= sign(c[1])
-    signs = sign.(t[:,2,1])
-    t = t .* reshape(signs,:,1,1) .* reshape(signs,1,1,:)
 
     # normalize
     c /= norm(c)

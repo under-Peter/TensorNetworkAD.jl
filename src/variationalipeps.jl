@@ -1,10 +1,10 @@
 using Optim, LineSearches
 using LinearAlgebra: I, norm
 
-const σx = [0 1; 1 0]
-const σy = [0 -1im; 1im 0]
-const σz = [1 0; 0 -1]
-const id2 = [1 0; 0 1]
+const σx = Float64[0 1; 1 0]
+const σy = ComplexF64[0 -1im; 1im 0]
+const σz = Float64[1 0; 0 -1]
+const id2 = Float64[1 0; 0 1]
 
 function symmetrize(x::AbstractArray{<:Any,5})
     x += permutedims(x, (1,4,3,2,5)) # left-right

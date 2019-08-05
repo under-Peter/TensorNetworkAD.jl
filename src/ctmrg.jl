@@ -69,8 +69,10 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     t += permutedims(conj(t), (3,2,1))
 
     # normalize
-    c /= norm(c)
-    t /= norm(t)
+    c /= mynorm(c)
+    t /= mynorm(t)
 
     return c, t, vals
 end
+
+mynorm(x) = sqrt(sum(y -> y * y, x))

@@ -153,16 +153,17 @@ using Optim, LineSearches
             real(energy(h,x,4,1e-12,100))
         end)
 
+        Random.seed!(2)
         # real
         h = heisenberghamiltonian()
         a = symmetrize(randn(2,2,2,2,2))
-        res1 = optimiseipeps(a, h, 10, 1e-12, 20,
+        res1 = optimiseipeps(a, h, 20, 1e-12, 100,
             optimargs = (Optim.Options(f_tol=1e-6, store_trace = true, show_trace=false),));
 
         # complex
         a = symmetrize(randn(2,2,2,2,2) .+ randn(2,2,2,2,2) .* 1im)
-        res2 = optimiseipeps(a, ComplexF64.(h), 10, 1e-12, 50,
-            optimargs = (Optim.Options(f_tol=1e-6,store_trace = true,  show_trace=false),),
+        res2 = optimiseipeps(a, h, 20, 1e-12, 100,
+            optimargs = (Optim.Options(f_tol=1e-6,store_trace = true,  show_trace=false, allow_f_increases=true),),
             optimmethod = Optim.LBFGS(
                 m = 10,
                 alphaguess = LineSearches.InitialStatic(alpha=1, scaled=true),

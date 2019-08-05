@@ -170,6 +170,6 @@ using Optim, LineSearches
                 linesearch = LineSearches.Static())
             );
         @isdefined(pmobj) && next!(pmobj)
-        @test isapprox(minimum(res1), minimum(res2), atol = 1e-5)
+        @test isapprox(minimum(res1), minimum(res2), atol = 1e-3)
     end
 end

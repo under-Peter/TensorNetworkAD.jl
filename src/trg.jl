@@ -19,17 +19,14 @@ function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
         a /= maxval
         lnZ += 2.0^(1-n)*log(maxval)
 
-        dr_ul = einsum("urdl -> drul", (a,))
-        ld_ru = einsum("urdl -> ldru", (a,))
+        dr_ul = ein"urdl -> drul"(a)
+        ld_ru = ein"urdl -> ldru"(a)
         dr, ul = trg_svd(dr_ul, χ, tol)
         ld, ru = trg_svd(ld_ru, χ, tol)
 
-        # a = einsum("npu,por,dom,lmn -> urdl", (dr,ld,ul,ru))
-        drld = einsum("npu,por -> nuor", (dr, ld))
-        drldul = einsum("nuor,dom -> nurdm", (drld, ul))
-        a = einsum("nurdm, lmn -> urdl", (drldul, ru))
+        a = ein"npu,por,dom,lmn -> urdl"(dr,ld,ul,ru)
     end
-    trace = einsum("ijij -> ", (a,))[]
+    trace = ein"ijij -> "(a)[]
     lnZ += log(trace)/2.0^niter
     return lnZ
 end
@@ -42,8 +39,8 @@ function trg_svd(t, dmax, tol)
     dmax = min(searchsortedfirst(s, tol, rev=true), dmax, length(s))
     FS = s[1:dmax]
     sqrtFSp = sqrt.(FS)
-    u = reshape(einsum("ij,j -> ij", (u[:,1:dmax],  sqrtFSp)), (d1, d2, dmax))
-    v = reshape(einsum("ij,i -> ij", (copy(v')[1:dmax,:], sqrtFSp)), (dmax, d3, d4))
+    u = reshape(ein"ij,j -> ij"(u[:,1:dmax],  sqrtFSp), (d1, d2, dmax))
+    v = reshape(ein"ij,i -> ij"(copy(v')[1:dmax,:], sqrtFSp), (dmax, d3, d4))
 
     return u, v
 end

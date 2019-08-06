@@ -5,7 +5,7 @@ using TensorNetworkAD: diaglocalhamiltonian, energy, expectationvalue, optimisei
                        symmetrize, num_grad
 using OMEinsum, Zygote, Random
 using LinearAlgebra: svd, norm
-using Optim
+using Optim, LineSearches
 
 @testset "variationalipeps" begin
     @testset "non-interacting" begin
@@ -45,7 +45,7 @@ using Optim
         h = zeros(2,2,2,2)
         h[1,1,2,2] = h[2,2,1,1] = 1
         h[2,2,2,2] = h[1,1,1,1] = -1
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 4, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
@@ -56,8 +56,8 @@ using Optim
         h[1,1,2,2] = h[2,2,1,1] = 1
         h[2,2,2,2] = h[1,1,1,1] = -1
         randu, s,  = svd(randn(2,2))
-        h = einsum("abcd,ai,bj,ck,dl -> ijkl", (h,randu,randu',randu,randu'))
-        a = randn(2,2,2,2,2)
+        h = ein"(((abcd,ai),bj),ck),dl -> ijkl"(h,randu,randu',randu,randu')
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 6, 0, 200,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
@@ -66,7 +66,7 @@ using Optim
 
         # comparison with results from https://github.com/wangleiphy/tensorgrad
         h = tfisinghamiltonian(1.0)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
@@ -74,16 +74,16 @@ using Optim
         @test isapprox(e, -2.12566, atol = 1e-3)
 
         h = tfisinghamiltonian(0.5)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.0312, atol = 1e-2)
 
-        Random.seed!(0)
+        Random.seed!(1)
         h = tfisinghamiltonian(2.0)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 6, 1e-9, 100,
             optimargs = (Optim.Options(f_tol=1e-8, show_trace=false),))
         e = minimum(res)
@@ -93,8 +93,9 @@ using Optim
 
     @testset "heisenberg" begin
         # comparison with results from https://github.com/wangleiphy/tensorgrad
+        Random.seed!(2)
         h = heisenberghamiltonian(Jz = 1.)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
@@ -103,7 +104,7 @@ using Optim
 
         # Random.seed!(0)
         h = heisenberghamiltonian(Jx = 2., Jy = 2.)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 6, 0, 100, #optimmethod = Optim.LBFGS(),
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
@@ -111,7 +112,7 @@ using Optim
         @test isapprox(e, -1.190, atol = 1e-2)
 
         h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
-        a = randn(2,2,2,2,2)
+        a = symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
@@ -152,17 +153,23 @@ using Optim
             real(energy(h,x,4,1e-12,100))
         end)
 
+        Random.seed!(2)
         # real
         h = heisenberghamiltonian()
         a = symmetrize(randn(2,2,2,2,2))
-        res1 = optimiseipeps(a, h, 10, 1e-12, 20,
+        res1 = optimiseipeps(a, h, 20, 1e-12, 100,
             optimargs = (Optim.Options(f_tol=1e-6, store_trace = true, show_trace=false),));
 
         # complex
         a = symmetrize(randn(2,2,2,2,2) .+ randn(2,2,2,2,2) .* 1im)
-        res2 = optimiseipeps(a, h, 20, 1e-12, 50,
-            optimargs = (Optim.Options(f_tol=1e-6,store_trace = true,  show_trace=false),));
+        res2 = optimiseipeps(a, h, 20, 1e-12, 100,
+            optimargs = (Optim.Options(f_tol=1e-6,store_trace = true,  show_trace=false, allow_f_increases=true),),
+            optimmethod = Optim.LBFGS(
+                m = 10,
+                alphaguess = LineSearches.InitialStatic(alpha=1, scaled=true),
+                linesearch = LineSearches.Static())
+            );
         @isdefined(pmobj) && next!(pmobj)
-        @test isapprox(minimum(res1), minimum(res2), atol = 1e-5)
+        @test isapprox(minimum(res1), minimum(res2), atol = 1e-3)
     end
 end

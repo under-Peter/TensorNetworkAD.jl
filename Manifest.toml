@@ -107,7 +107,7 @@ uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
 version = "0.0.10"
 
 [[Distributed]]
-deps = ["Random", "Serialization", "Sockets"]
+deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[FillArrays]]
@@ -129,7 +129,7 @@ uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
 version = "0.2.2"
 
 [[InteractiveUtils]]
-deps = ["Markdown"]
+deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[IterTools]]
@@ -200,10 +200,10 @@ uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.2"
 
 [[OMEinsum]]
-deps = ["Combinatorics", "IRTools", "PkgBenchmark", "TensorOperations", "TupleTools", "Zygote"]
-git-tree-sha1 = "4f315c18035bd8d9cf38abc522302d9077f4cac3"
+deps = ["Combinatorics", "IRTools", "LinearAlgebra", "MacroTools", "PkgBenchmark", "Requires", "TensorOperations", "TupleTools", "Zygote"]
+git-tree-sha1 = "385e12265ef737c7c2386dd27a546ed2733e1dfe"
 uuid = "ebe7aa44-baf0-506c-a96f-8464559b3922"
-version = "0.1.0"
+version = "0.2.0"
 
 [[Optim]]
 deps = ["Calculus", "DiffEqDiffTools", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "Random", "SparseArrays", "StatsBase"]
@@ -360,7 +360,7 @@ uuid = "30578b45-9adc-5946-b283-645ec420af67"
 version = "0.4.0"
 
 [[UUIDs]]
-deps = ["Random", "SHA"]
+deps = ["Random"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]

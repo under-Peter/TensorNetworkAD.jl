@@ -11,19 +11,23 @@ using Optim, LineSearches
     @testset "non-interacting" begin
         h = diaglocalhamiltonian([1,-1])
         as = (rand(3,3,3,3,2) for _ in 1:100)
+        @isdefined(pmobj) && next!(pmobj)
         @test all(a -> -1 < energy(h,a,5,0,10)/2 < 1, as)
 
         h = diaglocalhamiltonian([1,-1])
         a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,2] = randn()
+        @isdefined(pmobj) && next!(pmobj)
         @test energy(h,a,4,1e-12,100)/2 ≈ -1
 
         a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,1] = randn()
+        @isdefined(pmobj) && next!(pmobj)
         @test energy(h,a,10,0,300)/2 ≈ 1
 
         a = zeros(2,2,2,2,2) .+ 1e-12 * randn(2,2,2,2,2)
         a[1,1,1,1,2] = a[1,1,1,1,1] = randn()
+        @isdefined(pmobj) && next!(pmobj)
         @test abs(energy(h,a,10,0,300)) < 1e-9
 
 
@@ -33,6 +37,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 4, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)/2
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, minimum(hdiag), atol=1e-3)
     end
 
@@ -44,6 +49,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 4, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
 
         h = zeros(2,2,2,2)
@@ -55,6 +61,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 6, 0, 200,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e,-1, atol=1e-3)
 
         # comparison with results from https://github.com/wangleiphy/tensorgrad
@@ -63,6 +70,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.12566, atol = 1e-3)
 
         h = tfisinghamiltonian(0.5)
@@ -70,6 +78,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.0312, atol = 1e-2)
 
         Random.seed!(1)
@@ -78,6 +87,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 6, 1e-9, 100,
             optimargs = (Optim.Options(f_tol=1e-8, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -2.5113, atol = 1e-3)
     end
 
@@ -89,6 +99,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -0.66023, atol = 1e-3)
 
         # Random.seed!(0)
@@ -97,6 +108,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 6, 0, 100, #optimmethod = Optim.LBFGS(),
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -1.190, atol = 1e-2)
 
         h = heisenberghamiltonian(Jx = 0.5, Jy = 0.5, Jz = 2.0)
@@ -104,6 +116,7 @@ using Optim, LineSearches
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(e, -1.0208, atol = 1e-3)
     end
 
@@ -118,20 +131,24 @@ using Optim, LineSearches
             energy(h,x,4,0,100)
         end
 
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(gradzygote, gradnum, atol=1e-3)
     end
 
     @testset "complex" begin
         h = heisenberghamiltonian()
         a = symmetrize(randn(2,2,2,2,2))
+        @isdefined(pmobj) && next!(pmobj)
         @test energy(h,a,4,1e-12,100) ≈ energy(h,a .+ 0im,4,1e-12,100)
         ϕ = exp(1im * rand()* 2π)
+        @isdefined(pmobj) && next!(pmobj)
         @test energy(h,a .* ϕ,4,1e-12,100) ≈ energy(h,a,4,1e-12,100)
 
         gradzygote = first(Zygote.gradient(a) do x
             real(energy(h,x,4,1e-12,100))
         end)
 
+        @isdefined(pmobj) && next!(pmobj)
         @test gradzygote ≈ first(Zygote.gradient(a .+ 0im) do x
             real(energy(h,x,4,1e-12,100))
         end)
@@ -152,6 +169,7 @@ using Optim, LineSearches
                 alphaguess = LineSearches.InitialStatic(alpha=1, scaled=true),
                 linesearch = LineSearches.Static())
             );
+        @isdefined(pmobj) && next!(pmobj)
         @test isapprox(minimum(res1), minimum(res2), atol = 1e-3)
     end
 end

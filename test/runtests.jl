@@ -1,5 +1,3 @@
-using ProgressMeter
-pmobj = Progress(29, )
 using TensorNetworkAD
 using Test
 using Random
@@ -11,4 +9,3 @@ Random.seed!(4)
     include("ctmrg.jl")
     include("variationalipeps.jl")
 end
-println()

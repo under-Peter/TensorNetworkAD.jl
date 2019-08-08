@@ -33,13 +33,4 @@ function magnetisationofβ(β, χ)
     return abs(mag/norm)
 end
 
-function eoeofβ(β,χ)
-    a = isingtensor(β)
-    m = isingmagtensor(β)
-    c, t, = ctmrg(a, χ, 1e-6, 100)
-    d = diag(c)
-    d = d ./ norm(d,1)
-    return -sum(d .* log2.(d))
-end
-
 magofβ(β) = β > isingβc ? (1-sinh(2*β)^-4)^(1/8) : 0.

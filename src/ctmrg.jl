@@ -5,6 +5,13 @@ using IterTools: iterated
 using Base.Iterators: take, drop
 using Optim, LineSearches
 
+"""
+    initializec(a, χ, randinit)
+return a χ×χ corner-matrix `c`.
+if `randinit == true`, return a random matrix,
+otherwise return `a` with two indices summed over
+embedded in a χ×χ zeros-matrix.
+"""
 function initializec(a, χ, randinit)
     c = zeros(eltype(a), χ, χ)
     if randinit
@@ -19,6 +26,15 @@ function initializec(a, χ, randinit)
     return c
 end
 
+"""
+    initializet(a, χ, randinit)
+
+return a χ×d×χ tensor `t` where `d` is the
+dimension of the indices of `a`.
+if `randinit == true`, return a random matrix,
+otherwise return `a` with two indices summed over
+embedded in a χ×d×χ zeros-matrix.
+"""
 function initializet(a, χ, randinit)
     t = zeros(eltype(a), χ, size(a,1), χ)
     if randinit
@@ -33,8 +49,19 @@ function initializet(a, χ, randinit)
     return t
 end
 
-@Zygote.nograd initializec, initializet
 
+"""
+    ctmrg(a, χ, tol, maxit::Integer, randinit = false)
+returns a tuple `(c,t)` where `c` is the corner-transfer matrix of `a`
+and `t` is the half-infinite column/row tensor of `a`.
+`a` is assumed to satisfy symmetries w.r.t all possible permutations of
+its indices.
+
+The ctmrg-algorithm is run for up to `maxit` iterations with
+bond-dimension `χ` for the environment. If the sum of absolute
+differences between `c`s singular values between two steps is
+below `tol` the algorithm is assumed to be converged.
+"""
 function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
     d = size(a,1)
     # initialize
@@ -47,6 +74,14 @@ function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
     return c, t
 end
 
+"""
+    ctmrgstep((c,t,vals), (a, χ, d))
+
+evaluate one step of the ctmrg-algorithm, returning an updated `(c,t,vals)`
+which results from growing, renormalizing and symmetrizing `c` and `t` with `a`.
+`vals` are the singular values of the grown corner-matrix normalized such that
+the leading singular value is 1.
+"""
 function ctmrgstep((c,t,vals), (a, χ, d))
     # grow
     cp = ein"ad,iba,dcl,jkcb -> ijlk"(c, t, t, a)
@@ -75,4 +110,8 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     return c, t, vals
 end
 
+"""
+    mynorm(x)
+return the 2-norm of `x` - workaround errors in Zygote.
+"""
 mynorm(x) = sqrt(sum(y -> y * y, x))

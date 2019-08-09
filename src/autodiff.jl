@@ -1,5 +1,7 @@
 using Zygote
 
+@Zygote.nograd initializec, initializet
+@Zygote.nograd StopFunction
 @Zygote.adjoint function Base.typed_hvcat(::Type{T}, rows::Tuple{Vararg{Int}}, xs::S...) where {T,S}
   Base.typed_hvcat(T,rows, xs...), ȳ -> (nothing, nothing, permutedims(ȳ)...)
 end

@@ -1,9 +1,14 @@
 using TensorNetworkAD
 using Test
 using Zygote
-using TensorNetworkAD: isingtensor
+using TensorNetworkAD: isingtensor, tensorfromclassical
 
 @testset "trg" begin
+    @testset "exampletensor" begin
+        β = rand()
+        @isdefined(pmobj) && next!(pmobj)
+        @test isingtensor(β) ≈ tensorfromclassical([β -β; -β β])
+    end
     @testset "real" begin
         χ, niter = 5, 5
         foo = β -> trg(isingtensor(β), χ, niter)
@@ -16,6 +21,7 @@ using TensorNetworkAD: isingtensor
         @isdefined(pmobj) && next!(pmobj)
         @test num_grad(foo, 0.4, δ=1e-6) ≈ Zygote.gradient(foo, 0.4)[1]
     end
+
     @testset "complex" begin
         β, χ, niter = 0.4, 12, 3
         @isdefined(pmobj) && next!(pmobj)

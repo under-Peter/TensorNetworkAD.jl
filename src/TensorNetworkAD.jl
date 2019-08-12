@@ -5,7 +5,8 @@ using OMEinsum
 export trg, num_grad
 export ctmrg
 export optimiseipeps
-export heisenberghamiltonian, isinghamiltonian, isingtensor
+export hamiltonian, model_tensor, mag_tensor
+export Ising, TFIsing, Heisenberg
 
 include("trg.jl")
 include("fixedpoint.jl")

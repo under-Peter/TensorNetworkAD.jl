@@ -102,7 +102,7 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     vals = s ./ s[1]
 
 
-    # symmetrize
+    # indexperm_symmetrize
     c += c'
     t += ein"ijk -> kji"(conj(t))
 

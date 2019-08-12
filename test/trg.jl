@@ -1,16 +1,16 @@
 using TensorNetworkAD
 using Test
 using Zygote
-using TensorNetworkAD: isingtensor, tensorfromclassical
+using TensorNetworkAD: model_tensor, tensorfromclassical
 
 @testset "trg" begin
     @testset "exampletensor" begin
         β = rand()
-        @test isingtensor(β) ≈ tensorfromclassical([β -β; -β β])
+        @test model_tensor(Ising(),β) ≈ tensorfromclassical([β -β; -β β])
     end
     @testset "real" begin
         χ, niter = 5, 5
-        foo = β -> trg(isingtensor(β), χ, niter)
+        foo = β -> trg(model_tensor(Ising(),β), χ, niter)
         # the pytorch result with tensorgrad
         # https://github.com/wangleiphy/tensorgrad
         # clone this repo and type
@@ -21,9 +21,9 @@ using TensorNetworkAD: isingtensor, tensorfromclassical
 
     @testset "complex" begin
         β, χ, niter = 0.4, 12, 3
-        @test trg(isingtensor(β), χ, niter) ≈
-            real(trg(isingtensor(β) .+ 0im, χ, niter))
-        @test Zygote.gradient(β -> trg(isingtensor(β), χ, niter), 0.4)[1] ≈
-            real(Zygote.gradient(β -> real(trg(isingtensor(β) .+ 0im, χ, niter)), 0.4)[1])
+        @test trg(model_tensor(Ising(),β), χ, niter) ≈
+            real(trg(model_tensor(Ising(),β) .+ 0im, χ, niter))
+        @test Zygote.gradient(β -> trg(model_tensor(Ising(),β), χ, niter), 0.4)[1] ≈
+            real(Zygote.gradient(β -> real(trg(model_tensor(Ising(),β) .+ 0im, χ, niter)), 0.4)[1])
     end
 end

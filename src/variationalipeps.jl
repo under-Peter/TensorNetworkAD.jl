@@ -7,12 +7,12 @@ const σz = Float64[1 0; 0 -1]
 const id2 = Float64[1 0; 0 1]
 
 """
-    symmetrize(x::AbstractArray{T,5})
+    indexperm_symmetrize(x::AbstractArray{T,5})
 
 return a normalized `x` whith left-right,
 up-down, diagonal and rotational symmetry.
 """
-function symmetrize(x::AbstractArray{<:Any,5})
+function indexperm_symmetrize(x::AbstractArray{<:Any,5})
     x += permutedims(x, (1,4,3,2,5)) # left-right
     x += permutedims(x, (3,2,1,4,5)) # up-down
     x += permutedims(x, (2,1,4,3,5)) # diagonal
@@ -32,30 +32,6 @@ function diaglocalhamiltonian(diag::Vector)
     reshape(h,n,n,1,1) .* reshape(id,1,1,n,n) .+ reshape(h,1,1,n,n) .* reshape(id,n,n,1,1)
 end
 
-"""
-    tfisinghamiltonian(hx::Float64 = 1.0)
-
-return the transverse field ising hamiltonian with transverse magnetic
-field `hx` as a two-site operator.
-"""
-function tfisinghamiltonian(hx::Float64 = 1.0)
-    -2 * ein"ij,kl -> ijkl"(σz,σz) -
-        hx/2 * ein"ij,kl -> ijkl"(σx, id2) -
-        hx/2 * ein"ij,kl -> ijkl"(id2, σx)
-end
-
-"""
-    heisenberghamiltonian(;Jz::Float64 = 1.0, Jx::Float64 = 1.0, Jy::Float64 = 1.0)
-
-return the heisenberg hamiltonian with fields `Jz`, `Jx` and `Jy` as a two-site operator
-"""
-function heisenberghamiltonian(;Jz::Float64 = 1.0, Jx::Float64 = 1.0, Jy::Float64 = 1.0)
-    h = Jz * ein"ij,kl -> ijkl"(σz,σz) -
-        Jx * ein"ij,kl -> ijkl"(σx, σx) -
-        Jy * ein"ij,kl -> ijkl"(σy, σy)
-    h = ein"ijcd,kc,ld -> ijkl"(h,σx,σx')
-    real(h ./ 2)
-end
 
 """
     energy(h, tin, χ, tol, maxit)
@@ -65,7 +41,7 @@ return the energy of the ipeps described by local rank-5 tensors `tin` with
 and `maxit`.
 """
 function energy(h, tin, χ, tol, maxit)
-    tin = symmetrize(tin)
+    tin = indexperm_symmetrize(tin)
     d = size(tin,1)
     ap = ein"abcdx,ijkly -> aibjckdlxy"(tin, conj(tin))
     ap = reshape(ap, d^2, d^2, d^2, d^2, size(tin,5), size(tin,5))

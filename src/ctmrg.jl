@@ -1,4 +1,3 @@
-using BackwardsLinalg, OMEinsum
 using LinearAlgebra: normalize, norm, diag
 using Random
 using IterTools: iterated
@@ -51,22 +50,26 @@ end
 
 
 """
-    ctmrg(a, χ, tol, maxit::Integer, randinit = false)
+    ctmrg(a, χ, tol, maxit::Integer, cinit = nothing, tinit = nothing, randinit = false)
 returns a tuple `(c,t)` where `c` is the corner-transfer matrix of `a`
 and `t` is the half-infinite column/row tensor of `a`.
 `a` is assumed to satisfy symmetries w.r.t all possible permutations of
 its indices.
+Initial values for `c` and `t` can be provided via keyword-arguments.
+If no values are provided, `c` and `t` are initialized with random
+values (if `randinit = true`) or by reducing over indices of `a` (otherwise).
 
 The ctmrg-algorithm is run for up to `maxit` iterations with
 bond-dimension `χ` for the environment. If the sum of absolute
 differences between `c`s singular values between two steps is
 below `tol` the algorithm is assumed to be converged.
 """
-function ctmrg(a, χ, tol, maxit::Integer, randinit = false)
+function ctmrg(a::AbstractArray{<:Any,4}, χ::Integer, tol::Real, maxit::Integer;
+                cinit = nothing, tinit = nothing, randinit = false)
     d = size(a,1)
     # initialize
-    cinit = initializec(a, χ, randinit)
-    tinit = initializet(a, χ, randinit)
+    cinit === nothing && (cinit = initializec(a, χ, randinit))
+    tinit === nothing && (tinit = initializet(a, χ, randinit))
     oldvals = fill(Inf, χ*d)
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
@@ -100,8 +103,8 @@ function ctmrgstep((c,t,vals), (a, χ, d))
 
 
     # symmetrize
-    c += adjoint(c)
-    t += permutedims(conj(t), (3,2,1))
+    c += c'
+    t += ein"ijk -> kji"(conj(t))
 
     # normalize
     c /= mynorm(c)

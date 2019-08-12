@@ -2,9 +2,17 @@
 const isingβc = log(1+sqrt(2))/2
 
 """
-    tensorfromclassical(h)
+    tensorfromclassical(h::Matrix)
+
 given a classical 2-body hamiltonian `h`, return the corresponding tensor
-for use in e.g. `trg` for a two-dimensional grid.
+for use in e.g. `trg` for a two-dimensional square-lattice.
+
+# Example
+```julia
+julia> isingtensor(β) ≈ tensorfromclassical([β -β; -β β])
+
+true
+```
 """
 function tensorfromclassical(ham::Matrix)
     wboltzmann = exp.(ham)
@@ -46,7 +54,7 @@ ctmrg.
 function magnetisationofβ(β, χ)
     a = isingtensor(β)
     m = isingmagtensor(β)
-    c, t, = ctmrg(a, χ, 1e-6, 100, true)
+    c, t, = ctmrg(a, χ, 1e-6, 100, randinit = true)
     ctc  = ein"ia,ajb,bk -> ijk"(c,t,c)
     env  = ein"alc,ckd,bjd,bia -> ijkl"(ctc,t,ctc,t)
     mag  = ein"ijkl,ijkl ->"(env,m)[]

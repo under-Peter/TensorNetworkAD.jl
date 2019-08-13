@@ -12,9 +12,9 @@ end
 # with some complex arrays
 @Zygote.adjoint function LinearAlgebra.norm(A::AbstractArray, p::Real = 2)
     n = norm(A,p)
-    let n = n
-        back(Δ) = (Δ .* A ./ (n + eps(0f0)),)
-    end
+    back(Δ) = let n = n
+                    (Δ .* A ./ (n + eps(0f0)),)
+                end
     return n, back
 end
 

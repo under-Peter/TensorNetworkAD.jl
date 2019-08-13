@@ -1,6 +1,7 @@
 using TensorNetworkAD
 using Test, Random
 using Zygote
+using LinearAlgebra: norm
 
 @testset "autodiff" begin
     a = randn(10,10)

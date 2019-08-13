@@ -4,10 +4,6 @@ using Zygote, OMEinsum
 using TensorNetworkAD: model_tensor, tensorfromclassical, trg_svd
 
 @testset "trg" begin
-    @testset "exampletensor" begin
-        β = rand()
-        @test model_tensor(Ising(),β) ≈ tensorfromclassical([β -β; -β β])
-    end
     @testset "unit" begin
         t = randn(10,10,10,10)
         u, v = trg_svd(t, 100, 0)

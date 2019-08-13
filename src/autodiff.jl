@@ -1,9 +1,21 @@
 using Zygote
+using LinearAlgebra
 
-@Zygote.nograd initializec, initializet
 @Zygote.nograd StopFunction
+
+# patch
 @Zygote.adjoint function Base.typed_hvcat(::Type{T}, rows::Tuple{Vararg{Int}}, xs::S...) where {T,S}
   Base.typed_hvcat(T,rows, xs...), ȳ -> (nothing, nothing, permutedims(ȳ)...)
+end
+
+# improves performance compared to default implementation, also avoids errors
+# with some complex arrays
+@Zygote.adjoint function LinearAlgebra.norm(A::AbstractArray, p::Real = 2)
+    n = norm(A,p)
+    let n = n
+        back(Δ) = (Δ .* A ./ (n + eps(0f0)),)
+    end
+    return n, back
 end
 
 @doc raw"

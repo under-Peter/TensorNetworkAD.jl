@@ -48,6 +48,7 @@ function initializet(a, χ, randinit)
     return t
 end
 
+@Zygote.nograd initializec, initializet
 
 """
     ctmrg(a, χ, tol, maxit::Integer, cinit = nothing, tinit = nothing, randinit = false)
@@ -107,14 +108,8 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     t += ein"ijk -> kji"(conj(t))
 
     # normalize
-    c /= mynorm(c)
-    t /= mynorm(t)
+    c /= norm(c)
+    t /= norm(t)
 
     return c, t, vals
 end
-
-"""
-    mynorm(x)
-return the 2-norm of `x` - workaround errors in Zygote.
-"""
-mynorm(x) = sqrt(sum(y -> y * y, x))

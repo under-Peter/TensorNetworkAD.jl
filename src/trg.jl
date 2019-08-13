@@ -1,40 +1,46 @@
 # using OMEinsum
-using LinalgBackwards
+using BackwardsLinalg
 
-function trg(k, χ, niter)
-    D = 2
-    inds = 1:D
-    M = [sqrt(cosh(k)) sqrt(sinh(k)) ; sqrt(cosh(k)) -sqrt(sinh(k))]
-    T = meinsum(((-1,1),(-1,2),(-1,3),(-1,4)), (M,M,M,M), (1,2,3,4))
+@doc raw"
+    trg(a, χ, niter)
+return the partition-function of a two-dimensional system of size `2^niter`
+described by the tensor `a` calculated via the tensor renormalization group
+algorithm.
+`a` is a rank-4 tensor with the following indices:
 
-    lnZ = zero(k)
+        |1
+    4--[a]--2
+       3|
+"
+function trg(a::AbstractArray{T,4}, χ, niter; tol::Float64 = 1e-16) where T
+    lnZ = zero(T)
     for n in 1:niter
-        maxval = maximum(T)
-        T /= maxval
-        lnZ += 2^(niter-n+1)*log(maxval)
+        maxval = maximum(abs.(a))
+        a /= maxval
+        lnZ += 2.0^(1-n)*log(maxval)
 
-        d2 = size(T,1)^2
-        Ma = reshape(meinsum(((1,2,3,4),), (T,),(3,2,1,4)), d2, d2)
-        Mb = reshape(meinsum(((1,2,3,4),), (T,),(4,3,2,1)), d2, d2)
-        s1, s3 = trg_svd(Ma, χ)
-        s2, s4 = trg_svd(Mb, χ)
+        dr_ul = ein"urdl -> drul"(a)
+        ld_ru = ein"urdl -> ldru"(a)
+        dr, ul = trg_svd(dr_ul, χ, tol)
+        ld, ru = trg_svd(ld_ru, χ, tol)
 
-        T = meinsum(((-1,-2,1), (-2,-3,2), (3,-3,-4), (4,-4,-1)), (s1,s2,s3,s4),(1,2,3,4))
+        a = ein"npu,por,dom,lmn -> urdl"(dr,ld,ul,ru)
     end
-    trace = meinsum(((1,2,1,2),), (T,), ())[1]
-    lnZ += log(trace)
+    trace = ein"ijij -> "(a)[]
+    lnZ += log(trace)/2.0^niter
     return lnZ
 end
 
 
-function trg_svd(Ma, Dmax; tol::Float64=1e-12)
-    U, S, V = svd(Ma)
-    Dmax = min(searchsortedfirst(S, tol, rev=true), Dmax)
-    D = isqrt(size(Ma, 1))
-    FS = S[1:Dmax]
+function trg_svd(t, dmax, tol)
+    d1, d2, d3, d4 = size(t)
+    tmat = reshape(t, d1*d2, d3*d4)
+    u, s, v = svd(tmat)
+    dmax = min(searchsortedfirst(s, tol, rev=true), dmax, length(s))
+    FS = s[1:dmax]
     sqrtFSp = sqrt.(FS)
-    S1 = reshape(meinsum(((1,2),(2,)), (U[:,1:Dmax],  sqrtFSp), (1,2)), (D, D, Dmax))
-    S3 = reshape(meinsum(((1,2),(1,)), (copy(V')[1:Dmax,:], sqrtFSp), (1,2)), (Dmax, D, D))
+    u = reshape(ein"ij,j -> ij"(u[:,1:dmax],  sqrtFSp), (d1, d2, dmax))
+    v = reshape(ein"ij,i -> ij"(copy(v')[1:dmax,:], sqrtFSp), (dmax, d3, d4))
 
-    S1, S3
+    return u, v
 end

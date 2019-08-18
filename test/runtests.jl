@@ -2,14 +2,6 @@ using TensorNetworkAD
 using Test
 using Random
 
-Random.seed!(4)
-include("autodiff.jl")
-include("exampletensors.jl")
-include("fixedpoint.jl")
-include("trg.jl")
-include("ctmrg.jl")
-include("variationalipeps.jl")
-
 @testset "TensorNetworkAD.jl" begin
     println("autodiff tests running...")
     include("autodiff.jl")

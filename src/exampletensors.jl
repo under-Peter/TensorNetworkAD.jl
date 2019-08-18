@@ -55,7 +55,8 @@ ctmrg.
 function magnetisation(model::MT, β, χ) where {MT <: HamiltonianModel}
     a = model_tensor(model,β)
     m = mag_tensor(model, β)
-    env, vals = ctmrg(a, χ, 1e-6, 100, randinit = true)
+    rt = SquareCTMRGRuntime(a, Val(:random), χ)
+    env, vals = ctmrg(rt; tol=1e-6, maxit=100)
     c, t = env.c, env.t
     ctc  = ein"ia,ajb,bk -> ijk"(c,t,c)
     env  = ein"alc,ckd,bjd,bia -> ijkl"(ctc,t,ctc,t)

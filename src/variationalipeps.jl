@@ -7,20 +7,6 @@ const σz = Float64[1 0; 0 -1]
 const id2 = Float64[1 0; 0 1]
 
 """
-    indexperm_symmetrize(x::AbstractArray{T,5})
-
-return a normalized `x` whith left-right,
-up-down, diagonal and rotational symmetry.
-"""
-function indexperm_symmetrize(x::AbstractArray{<:Any,5})
-    x += permutedims(x, (1,4,3,2,5)) # left-right
-    x += permutedims(x, (3,2,1,4,5)) # up-down
-    x += permutedims(x, (2,1,4,3,5)) # diagonal
-    x += permutedims(x, (4,3,2,1,5)) # rotation
-    return x / norm(x)
-end
-
-"""
     diaglocalhamiltonian(diag::Vector)
 return the 2-site Hamiltonian with single-body terms given
 by the diagonal `diag`.
@@ -32,38 +18,38 @@ function diaglocalhamiltonian(diag::Vector)
     reshape(h,n,n,1,1) .* reshape(id,1,1,n,n) .+ reshape(h,1,1,n,n) .* reshape(id,n,n,1,1)
 end
 
-
 """
-    energy(h, tin, χ, tol, maxit)
+    energy(h, tin; χ, tol, maxit)
 
 return the energy of the ipeps described by local rank-5 tensors `tin` with
 2-site hamiltonian `h` and calculated via a ctmrg with parameters `χ`, `tol`
 and `maxit`.
 """
-function energy(h, tin, χ, tol, maxit)
-    tin = indexperm_symmetrize(tin)
-    d = size(tin,1)
-    ap = ein"abcdx,ijkly -> aibjckdlxy"(tin, conj(tin))
-    ap = reshape(ap, d^2, d^2, d^2, d^2, size(tin,5), size(tin,5))
+function energy(h::AbstractArray{T,4}, ipeps::IPEPS; χ::Int, tol::Real, maxit::Int) where T
+    ipeps = indexperm_symmetrize(ipeps)  # NOTE: this is not good
+    D = getd(ipeps)^2
+    s = gets(ipeps)
+    ap = ein"abcdx,ijkly -> aibjckdlxy"(ipeps.t, conj(ipeps.t))
+    ap = reshape(ap, D, D, D, D, s, s)
     a = ein"ijklaa -> ijkl"(ap)
-    env = ctmrg(a, χ, tol, maxit)
-    e = expectationvalue(h, ap, env)
 
+    rt = SquareCTMRGRuntime(a, Val(:raw), χ)
+    rt, vals = ctmrg(rt; tol=tol, maxit=maxit)
+    e = expectationvalue(h, ap, rt)
     return e
 end
 
 """
-    expectationvalue(h, a, (c,t))
+    expectationvalue(h, ap, (c,t))
 
 return the expectationvalue of a two-site operator `h` with the sites
-described by rank-5 tensor `a` each and an environment described by
+described by rank-6 tensor `ap` each and an environment described by
 a corner tensor `c` and row/column tensor `t`.
 """
-function expectationvalue(h, a, env)
-    c, t = env.c
-    c, t = env.t
-    a /= norm(a)
-    l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(c,t,t,a,c,t)
+function expectationvalue(h, ap, rt::SquareCTMRGRuntime) where T
+    c, t = rt.c, rt.t
+    ap /= norm(ap)
+    l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(c,t,t,ap,c,t)
     e = ein"abcij,abckl,ijkl -> "(l,l,h)[]
     n = ein"ijkaa,ijkbb -> "(l,l)[]
     return e/n
@@ -78,10 +64,11 @@ two-site hamiltonian `h`. The minimization is done using `Optim` with default-me
 providing `optimmethod`. Other options to optim can be passed with `optimargs`.
 The energy is calculated using ctmrg with parameters `χ`, `tol` and `maxit`.
 """
-function optimiseipeps(t, h, χ, tol, maxit;
+function optimiseipeps(ipeps::IPEPS{LT}, h; χ::Int, tol::Real, maxit::Int,
         optimargs = (),
-        optimmethod = LBFGS(m = 20))
-    let energy = x -> real(energy(h, x, χ, tol, maxit))
+        optimmethod = LBFGS(m = 20)) where LT
+    t = ipeps.t
+    let energy = x -> real(energy(h, IPEPS{LT}(x); χ=χ, tol=tol, maxit=maxit))
         res = optimize(energy,
             Δ -> Zygote.gradient(energy,Δ)[1], t, optimmethod, inplace = false, optimargs...)
     end

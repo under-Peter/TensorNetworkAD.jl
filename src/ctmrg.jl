@@ -8,32 +8,31 @@ export AbstractLattice, SquareLattice
 abstract type AbstractLattice end
 struct SquareLattice <: AbstractLattice end
 
-export IPEPS, SquareIPEPS
+export CTMRGRuntime, SquareCTMRGRuntime
 
+# NOTE: should be renamed to more explicit names
 """
-    IPEPS{LT<:AbstractLattice, T, N}
+the size of `a` is `D × D × D × D`
+the size of `c` is `χ × χ`
+the size of `t` is `χ × D × χ`
 
-Infinite projected entangled pair of states.
-`LT` is the type of lattice, `T` and `N` are bulk tensor element type and order.
+Here, `D` is equal to `d^2` is in iPEPS
 """
-struct IPEPS{LT<:AbstractLattice, T, N}
-    a::AbstractArray{T, N}
-    # TODO: check input size in constructor
+struct CTMRGRuntime{LT,T,N,AT<:AbstractArray{T,N}}
+    a::AT
+    c
+    t
+    function CTMRGRuntime{LT}(a::AT,
+        # TODO: check input size in constructor
+        c::AbstractArray{T}, t::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
+        new{LT,T,N,AT}(a,c,t)
+    end
 end
-IPEPS{LT}(a::AbstractArray{T,N}) where {LT,T,N} = IPEPS{LT,T,N}(a)
-nflavor(ipeps::IPEPS) = size(ipeps.a, 1)
+const SquareCTMRGRuntime{T,AT} = CTMRGRuntime{SquareLattice,T,4,AT}
+SquareCTMRGRuntime(a::AT,c,t) where {T,AT<:AbstractArray{T, 4}} = CTMRGRuntime{SquareLattice}(a,c,t)
 
-const SquareIPEPS{T} = IPEPS{SquareLattice, T, 4}
-SquareIPEPS(a::AbstractArray{T, 4}) where T = IPEPS{SquareLattice,T,4}(a)
-
-# NOTE: maybe `C` (corner) and `E` (edge) are better.
-struct CTMRGEnv{CT,TT}
-    c::CT
-    t::TT
-    # TODO: check input size in constructor
-end
-
-getχ(env::CTMRGEnv) = size(env.c, 1)
+getχ(rt::CTMRGRuntime) = size(rt.c, 1)
+getD(rt::CTMRGRuntime) = size(rt.a, 1)
 
 """
     initialize_env(mode, a, χ)
@@ -43,36 +42,43 @@ if `randinit == true`, return a random matrix,
 otherwise return `a` with two indices summed over
 embedded in a χ×χ zeros-matrix.
 
-return a χ×d×χ tensor `t` where `d` is the
+return a χ×D×χ tensor `t` where `D` is the
 dimension of the indices of `a`.
 if `randinit == true`, return a random matrix,
 otherwise return `a` with two indices summed over
-embedded in a χ×d×χ zeros-matrix.
+embedded in a χ×D×χ zeros-matrix.
 """
-function initialize_env(::Val{:random}, ipeps::SquareIPEPS{T}, χ::Int) where T
-    c = randn(T, χ, χ)
-    c += adjoint(c)
-    t = randn(T, χ, nflavor(ipeps), χ)
-    t += permutedims(conj(t), (3,2,1))
-    return CTMRGEnv(c, t)
+function SquareCTMRGRuntime(a::AbstractArray{T,4}, env::Val, χ::Int) where T
+    return SquareCTMRGRuntime(a, _initializect_square(a, env, χ)...)
 end
 
-# NOTE: what is this initialization strategy?
-function initialize_env(::Val{:raw}, ipeps::SquareIPEPS{T}, χ::Int) where T
+function _initializect_square(a::AbstractArray{T,4}, env::Val{:random}, χ::Int) where T
+    c = randn(T, χ, χ)
+    c += adjoint(c)
+    t = randn(T, χ, size(a,1), χ)
+    t += permutedims(conj(t), (3,2,1))
+    c, t
+end
+
+function _initializect_square(a::AbstractArray{T,4}, env::Val{:raw}, χ::Int) where T
     c = zeros(T, χ, χ)
-    cinit = ein"ijkl -> ij"(ipeps.a)
+    cinit = ein"ijkl -> ij"(a)
     foreach(CartesianIndices(cinit)) do i
         i in CartesianIndices(c) && (c[i] = cinit[i])
     end
-    t = zeros(T, χ, nflavor(ipeps), χ)
-    tinit = ein"ijkl -> ijk"(ipeps.a)
+    t = zeros(T, χ, size(a,1), χ)
+    tinit = ein"ijkl -> ijk"(a)
     foreach(CartesianIndices(tinit)) do i
         i in CartesianIndices(t) && (t[i] = tinit[i])
     end
-    return CTMRGEnv(c, t)
+    c, t
 end
 
-@Zygote.nograd initialize_env
+@Zygote.nograd _initializect_square
+@Zygote.adjoint function CTMRGRuntime{LT}(a::AT,
+        c::AbstractArray{T}, t::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
+        return CTMRGRuntime{LT}(a,c,t), dy->(dy.a, dy.c, dy.t)
+end
 
 """
     ctmrg(a, χ, tol, maxit::Integer, cinit = nothing, tinit = nothing, randinit = false)
@@ -89,49 +95,40 @@ bond-dimension `χ` for the environment. If the sum of absolute
 differences between `c`s singular values between two steps is
 below `tol` the algorithm is assumed to be converged.
 """
-function ctmrg(a::AbstractArray{<:Any,4}, χ::Integer, tol::Real, maxit::Integer;
-                randinit = false)
-    a = SquareIPEPS(a)
-    env = initialize_env(Val(randinit ? :random : :raw),a,χ)
-    ctmrg(a, env; tol=tol, maxit=maxit)
-end
-
-function ctmrg(a::SquareIPEPS, env::CTMRGEnv; tol::Real, maxit::Integer)
-    d = nflavor(a)
+function ctmrg(rt::CTMRGRuntime; tol::Real, maxit::Integer)
     # initialize
-    oldvals = fill(Inf, getχ(env)*d)
+    oldvals = fill(Inf, getχ(rt)*getD(rt))
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
-    env, vals = fixedpoint(ctmrgstep, (env, oldvals), (a, getχ(env), d), stopfun)
-    return env, vals
+    rt, vals = fixedpoint(res->ctmrgstep(res...), (rt, oldvals), stopfun)
+    return rt, vals
 end
 
 """
-    ctmrgstep((env,vals), (a, χ, d))
+    ctmrgstep(rt,vals)
 
 evaluate one step of the ctmrg-algorithm, returning an updated `(c,t,vals)`
 which results from growing, renormalizing and symmetrizing `c` and `t` with `a`.
 `vals` are the singular values of the grown corner-matrix normalized such that
 the leading singular value is 1.
 """
-function ctmrgstep((env,vals), (ipeps, χ, d))
+function ctmrgstep(rt::SquareCTMRGRuntime, vals)
     # grow
-    a = ipeps.a
-    c, t = env.c, env.t
+    a, c, t = rt.a, rt.c, rt.t
+    D, χ = getD(rt), getχ(rt)
     cp = ein"ad,iba,dcl,jkcb -> ijlk"(c, t, t, a)
     tp = ein"iam,jkla -> ijklm"(t,a)
 
     # renormalize
-    cpmat = reshape(cp, χ*d, χ*d)
+    cpmat = reshape(cp, χ*D, χ*D)
     cpmat += adjoint(cpmat)
     u, s, v = svd(cpmat)
-    z = reshape(u[:, 1:χ], χ, d, χ)
+    z = reshape(u[:, 1:χ], χ, D, χ)
 
     c = ein"abcd,abi,cdj -> ij"(cp, conj(z), z)
     t = ein"abjcd,abi,dck -> ijk"(tp, conj(z), z)
 
     vals = s ./ s[1]
-
 
     # indexperm_symmetrize
     c += c'
@@ -141,5 +138,5 @@ function ctmrgstep((env,vals), (ipeps, χ, d))
     c /= norm(c)
     t /= norm(t)
 
-    return CTMRGEnv(c, t), vals
+    return SquareCTMRGRuntime(a, c, t), vals
 end

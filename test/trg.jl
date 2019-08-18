@@ -1,4 +1,5 @@
 using TensorNetworkAD
+using TensorNetworkAD: trg_svd
 using Test
 using Zygote, OMEinsum
 using TensorNetworkAD: model_tensor, tensorfromclassical, trg_svd

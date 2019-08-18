@@ -8,6 +8,8 @@ export optimiseipeps
 export hamiltonian, model_tensor, mag_tensor
 export Ising, TFIsing, Heisenberg
 
+include("hamiltonianmodels.jl")
+
 include("trg.jl")
 include("fixedpoint.jl")
 include("ctmrg.jl")

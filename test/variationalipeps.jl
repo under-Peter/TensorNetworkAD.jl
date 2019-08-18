@@ -57,14 +57,14 @@ using Optim, LineSearches
         @test isapprox(e,-1, atol=1e-3)
 
         # comparison with results from https://github.com/wangleiphy/tensorgrad
-        h = hamiltonian(TFIsing(); hx = 1.0)
+        h = hamiltonian(TFIsing(1.0))
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
         e = minimum(res)
         @test isapprox(e, -2.12566, atol = 1e-3)
 
-        h = hamiltonian(TFIsing(); hx = 0.5)
+        h = hamiltonian(TFIsing(0.5))
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
@@ -72,7 +72,7 @@ using Optim, LineSearches
         @test isapprox(e, -2.0312, atol = 1e-2)
 
         Random.seed!(1)
-        h = hamiltonian(TFIsing(); hx = 2.0)
+        h = hamiltonian(TFIsing(2.0))
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 6, 1e-9, 100,
             optimargs = (Optim.Options(f_tol=1e-8, show_trace=false),))
@@ -83,7 +83,7 @@ using Optim, LineSearches
     @testset "heisenberg" begin
         # comparison with results from https://github.com/wangleiphy/tensorgrad
         Random.seed!(2)
-        h = hamiltonian(Heisenberg(), Jz = 1.)
+        h = hamiltonian(Heisenberg())
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol=1e-6, show_trace=false),))
@@ -91,14 +91,14 @@ using Optim, LineSearches
         @test isapprox(e, -0.66023, atol = 1e-3)
 
         # Random.seed!(0)
-        h = hamiltonian(Heisenberg(), Jx = 2., Jy = 2.)
+        h = hamiltonian(Heisenberg(2.0, 2.0, 1.0))
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 6, 0, 100, #optimmethod = Optim.LBFGS(),
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))
         e = minimum(res)
         @test isapprox(e, -1.190, atol = 1e-2)
 
-        h = hamiltonian(Heisenberg(), Jx = 0.5, Jy = 0.5, Jz = 2.0)
+        h = hamiltonian(Heisenberg(0.5, 0.5, 2.0))
         a = indexperm_symmetrize(randn(2,2,2,2,2))
         res = optimiseipeps(a, h, 5, 0, 100,
             optimargs = (Optim.Options(f_tol = 1e-6, show_trace = false),))

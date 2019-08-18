@@ -46,8 +46,8 @@ function energy(h, tin, χ, tol, maxit)
     ap = ein"abcdx,ijkly -> aibjckdlxy"(tin, conj(tin))
     ap = reshape(ap, d^2, d^2, d^2, d^2, size(tin,5), size(tin,5))
     a = ein"ijklaa -> ijkl"(ap)
-    c, t = ctmrg(a, χ, tol, maxit)
-    e = expectationvalue(h, ap, (c,t))
+    env = ctmrg(a, χ, tol, maxit)
+    e = expectationvalue(h, ap, env)
 
     return e
 end
@@ -59,7 +59,9 @@ return the expectationvalue of a two-site operator `h` with the sites
 described by rank-5 tensor `a` each and an environment described by
 a corner tensor `c` and row/column tensor `t`.
 """
-function expectationvalue(h, a, (c,t))
+function expectationvalue(h, a, env)
+    c, t = env.c
+    c, t = env.t
     a /= norm(a)
     l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(c,t,t,a,c,t)
     e = ein"abcij,abckl,ijkl -> "(l,l,h)[]

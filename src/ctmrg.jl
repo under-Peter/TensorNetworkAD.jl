@@ -4,29 +4,44 @@ using IterTools: iterated
 using Base.Iterators: take, drop
 using Optim, LineSearches
 
+export AbstractLattice, SquareLattice
+abstract type AbstractLattice end
+struct SquareLattice <: AbstractLattice end
+
+export IPEPS, SquareIPEPS
+
 """
-    initializec(a, χ, randinit)
+    IPEPS{LT<:AbstractLattice, T, N}
+
+Infinite projected entangled pair of states.
+`LT` is the type of lattice, `T` and `N` are bulk tensor element type and order.
+"""
+struct IPEPS{LT<:AbstractLattice, T, N}
+    a::AbstractArray{T, N}
+    # TODO: check input size in constructor
+end
+IPEPS{LT}(a::AbstractArray{T,N}) where {LT,T,N} = IPEPS{LT,T,N}(a)
+nflavor(ipeps::IPEPS) = size(ipeps.a, 1)
+
+const SquareIPEPS{T} = IPEPS{SquareLattice, T, 4}
+SquareIPEPS(a::AbstractArray{T, 4}) where T = IPEPS{SquareLattice,T,4}(a)
+
+# NOTE: maybe `C` (corner) and `E` (edge) are better.
+struct CTMRGEnv{CT,TT}
+    c::CT
+    t::TT
+    # TODO: check input size in constructor
+end
+
+getχ(env::CTMRGEnv) = size(env.c, 1)
+
+"""
+    initialize_env(mode, a, χ)
+
 return a χ×χ corner-matrix `c`.
 if `randinit == true`, return a random matrix,
 otherwise return `a` with two indices summed over
 embedded in a χ×χ zeros-matrix.
-"""
-function initializec(a, χ, randinit)
-    c = zeros(eltype(a), χ, χ)
-    if randinit
-        rand!(c)
-        c += adjoint(c)
-    else
-        cinit = ein"ijkl -> ij"(a)
-        foreach(CartesianIndices(cinit)) do i
-            i in CartesianIndices(c) && (c[i] = cinit[i])
-        end
-    end
-    return c
-end
-
-"""
-    initializet(a, χ, randinit)
 
 return a χ×d×χ tensor `t` where `d` is the
 dimension of the indices of `a`.
@@ -34,21 +49,30 @@ if `randinit == true`, return a random matrix,
 otherwise return `a` with two indices summed over
 embedded in a χ×d×χ zeros-matrix.
 """
-function initializet(a, χ, randinit)
-    t = zeros(eltype(a), χ, size(a,1), χ)
-    if randinit
-        rand!(t)
-        t += permutedims(conj(t), (3,2,1))
-    else
-        tinit = ein"ijkl -> ijk"(a)
-        foreach(CartesianIndices(tinit)) do i
-            i in CartesianIndices(t) && (t[i] = tinit[i])
-        end
-    end
-    return t
+function initialize_env(::Val{:random}, ipeps::SquareIPEPS{T}, χ::Int) where T
+    c = randn(T, χ, χ)
+    c += adjoint(c)
+    t = randn(T, χ, nflavor(ipeps), χ)
+    t += permutedims(conj(t), (3,2,1))
+    return CTMRGEnv(c, t)
 end
 
-@Zygote.nograd initializec, initializet
+# NOTE: what is this initialization strategy?
+function initialize_env(::Val{:raw}, ipeps::SquareIPEPS{T}, χ::Int) where T
+    c = zeros(T, χ, χ)
+    cinit = ein"ijkl -> ij"(ipeps.a)
+    foreach(CartesianIndices(cinit)) do i
+        i in CartesianIndices(c) && (c[i] = cinit[i])
+    end
+    t = zeros(T, χ, nflavor(ipeps), χ)
+    tinit = ein"ijkl -> ijk"(ipeps.a)
+    foreach(CartesianIndices(tinit)) do i
+        i in CartesianIndices(t) && (t[i] = tinit[i])
+    end
+    return CTMRGEnv(c, t)
+end
+
+@Zygote.nograd initialize_env
 
 """
     ctmrg(a, χ, tol, maxit::Integer, cinit = nothing, tinit = nothing, randinit = false)
@@ -66,28 +90,34 @@ differences between `c`s singular values between two steps is
 below `tol` the algorithm is assumed to be converged.
 """
 function ctmrg(a::AbstractArray{<:Any,4}, χ::Integer, tol::Real, maxit::Integer;
-                cinit = nothing, tinit = nothing, randinit = false)
-    d = size(a,1)
+                randinit = false)
+    a = SquareIPEPS(a)
+    env = initialize_env(Val(randinit ? :random : :raw),a,χ)
+    ctmrg(a, env; tol=tol, maxit=maxit)
+end
+
+function ctmrg(a::SquareIPEPS, env::CTMRGEnv; tol::Real, maxit::Integer)
+    d = nflavor(a)
     # initialize
-    cinit === nothing && (cinit = initializec(a, χ, randinit))
-    tinit === nothing && (tinit = initializet(a, χ, randinit))
-    oldvals = fill(Inf, χ*d)
+    oldvals = fill(Inf, getχ(env)*d)
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
-    c, t, = fixedpoint(ctmrgstep, (cinit, tinit, oldvals), (a, χ, d), stopfun)
-    return c, t
+    env, vals = fixedpoint(ctmrgstep, (env, oldvals), (a, getχ(env), d), stopfun)
+    return env, vals
 end
 
 """
-    ctmrgstep((c,t,vals), (a, χ, d))
+    ctmrgstep((env,vals), (a, χ, d))
 
 evaluate one step of the ctmrg-algorithm, returning an updated `(c,t,vals)`
 which results from growing, renormalizing and symmetrizing `c` and `t` with `a`.
 `vals` are the singular values of the grown corner-matrix normalized such that
 the leading singular value is 1.
 """
-function ctmrgstep((c,t,vals), (a, χ, d))
+function ctmrgstep((env,vals), (ipeps, χ, d))
     # grow
+    a = ipeps.a
+    c, t = env.c, env.t
     cp = ein"ad,iba,dcl,jkcb -> ijlk"(c, t, t, a)
     tp = ein"iam,jkla -> ijklm"(t,a)
 
@@ -111,5 +141,5 @@ function ctmrgstep((c,t,vals), (a, χ, d))
     c /= norm(c)
     t /= norm(t)
 
-    return c, t, vals
+    return CTMRGEnv(c, t), vals
 end

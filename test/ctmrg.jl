@@ -10,6 +10,7 @@ using Zygote
     @test sq isa SquareIPEPS
     @test getd(sq) == 3
     @test gets(sq) == 2
+    @test_throws DimensionMismatch SquareIPEPS(randn(3,3,4,3,2))
 end
 
 @testset "runtime" begin

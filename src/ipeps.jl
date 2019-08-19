@@ -16,7 +16,8 @@ IPEPS{LT}(t::AT) where {LT,T,N,AT<:AbstractArray{T,N}} = IPEPS{LT,T,N,AT}(t)
 const SquareIPEPS{T} = IPEPS{SquareLattice, T, 5}
 function SquareIPEPS(t::AT) where {T,AT<:AbstractArray{T, 5}}
     # NOTE: from here, wrapping `t` with a `IPEPS` type can prevent programing from illegal input with incorrect size.
-    size(t,1) == size(t,2) == size(t,3) == size(t,4) || error("size of tensor error, should be `(d, d, d, d, s)`, got $(size(t)).")
+    size(t,1) == size(t,2) == size(t,3) == size(t,4) || throw(DimensionMismatch(
+        "size of tensor error, should be `(d, d, d, d, s)`, got $(size(t))."))
     IPEPS{SquareLattice,T,5,AT}(t)
 end
 getd(ipeps::SquareIPEPS) = size(ipeps.t, 1)

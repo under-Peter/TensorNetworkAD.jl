@@ -16,7 +16,7 @@ the size of `a` is `D × D × D × D`
 the size of `c` is `χ × χ`
 the size of `t` is `χ × D × χ`
 
-Here, `D` is equal to `d^2` is in iPEPS
+Here, `D` is equal to `d^2` as in iPEPS
 """
 struct CTMRGRuntime{LT,T,N,AT<:AbstractArray{T,N}}
     a::AT

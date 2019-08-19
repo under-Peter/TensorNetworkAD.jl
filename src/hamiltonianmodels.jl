@@ -2,8 +2,8 @@ abstract type HamiltonianModel end
 
 struct Ising <: HamiltonianModel end
 
-struct TFIsing <: HamiltonianModel
-    hx::Float64
+struct TFIsing{T<:Real} <: HamiltonianModel
+    hx::T
 end
 
 """
@@ -19,10 +19,10 @@ function hamiltonian(model::TFIsing)
         hx/2 * ein"ij,kl -> ijkl"(id2, σx)
 end
 
-struct Heisenberg <: HamiltonianModel
-    Jz::Float64
-    Jx::Float64
-    Jy::Float64
+struct Heisenberg{T<:Real} <: HamiltonianModel
+    Jz::T
+    Jx::T
+    Jy::T
 end
 Heisenberg() = Heisenberg(1.0,1.0,1.0)
 

@@ -19,10 +19,8 @@ end
     stopfun = StopFunction(Ref(Inf), 1e-9)
 
     #do nothing
-    @test fixedpoint(next, 9, 9, x -> true) ≈ 9
+    @test fixedpoint(x->next(x, 9), 9, x -> true) ≈ 9
     #evaluate once
     (st::StopFunction2)(v) = (st.counter += 1; st.counter == st.limit)
-    @test fixedpoint(next, 9, 9, StopFunction2(0,2)) ≈ 1/2*(9 + 1)
-
-
+    @test fixedpoint(x->next(x, 9), 9, StopFunction2(0,2)) ≈ 1/2*(9 + 1)
 end

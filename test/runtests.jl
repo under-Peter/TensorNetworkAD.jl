@@ -2,24 +2,34 @@ using TensorNetworkAD
 using Test
 using Random
 
-Random.seed!(4)
-
 @testset "TensorNetworkAD.jl" begin
-    println("autodiff tests running...")
-    include("autodiff.jl")
+    @testset "autodiff" begin
+        println("autodiff tests running...")
+        include("autodiff.jl")
+    end
 
-    println("exampletensors tests running...")
-    include("exampletensors.jl")
+    @testset "example tensors" begin
+        println("exampletensors tests running...")
+        include("exampletensors.jl")
+    end
 
-    println("fixedpoint tests running...")
-    include("fixedpoint.jl")
+    @testset "fixedpoint" begin
+        println("fixedpoint tests running...")
+        include("fixedpoint.jl")
+    end
 
-    println("trg tests running...")
-    include("trg.jl")
+    @testset "trg" begin
+        println("trg tests running...")
+        include("trg.jl")
+    end
 
-    println("ctmrg tests running...")
-    include("ctmrg.jl")
+    @testset "ctmrg" begin
+        println("ctmrg tests running...")
+        include("ctmrg.jl")
+    end
 
-    println("variationalipeps tests running...")
-    include("variationalipeps.jl")
+    @testset "variationalipeps" begin
+        println("variationalipeps tests running...")
+        include("variationalipeps.jl")
+    end
 end

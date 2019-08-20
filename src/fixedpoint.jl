@@ -2,14 +2,14 @@ using Base.Iterators: drop, take
 using IterTools: iterated, imap
 
 """
-    fixedpoint(f, guess, init, stopfun)
+    fixedpoint(f, guess, stopfun)
 
-return the result of applying `guess = f(guess,init)`
+return the result of applying `guess = f(guess)`
 until convergence. Convergence is decided by applying
 `stopfun(guess)` which returns a Boolean.
 """
-function fixedpoint(f, guess, init, stopfun)
-    for state in iterated(x -> f(x,init), guess)
+function fixedpoint(f, guess, stopfun)
+    for state in iterated(f, guess)
         stopfun(state) && return state
     end
 end
@@ -31,7 +31,7 @@ function (st::StopFunction)(state)
     st.counter += 1
     st.counter > st.maxit && return true
 
-    vals = state[3]
+    vals = state[2]
     diff = norm(vals - st.oldvals)
     diff <= st.tol && return true
     st.oldvals = vals

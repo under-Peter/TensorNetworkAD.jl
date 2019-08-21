@@ -5,7 +5,7 @@ abstract type HamiltonianModel end
     hamiltonian(model<:HamiltonianModel)
 return the hamiltonian of the `model` as a two-site tensor operator.
 "
-function hamiltonian(<:HamiltonianModel) end
+function hamiltonian end
 
 struct Ising <: HamiltonianModel end
 

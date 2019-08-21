@@ -26,21 +26,20 @@ end
 
 @testset "ctmrg unit test" begin
     rt = SquareCTMRGRuntime(randn(2,2,2,2), Val(:random), 10)
-    rt, vals = ctmrg(rt; tol=1e-6, maxit=10)
+    rt = ctmrg(rt; tol=1e-6, maxit=10)
     @test rt isa CTMRGRuntime
     @test getχ(rt) == 10
-    @test vals isa Vector
 end
 
 
 @testset "ctmrg" begin
     Random.seed!(5)
-    @test isapprox(magnetisation(Ising(), 0,2), magofβ(0), atol=1e-6)
-    @test magnetisation(Ising(), 1,2) ≈ magofβ(1)
-    @test isapprox(magnetisation(Ising(), 0.2,10), magofβ(0.2), atol = 1e-4)
-    @test isapprox(magnetisation(Ising(), 0.4,10), magofβ(0.4), atol = 1e-3)
-    @test magnetisation(Ising(), 0.6,4) ≈ magofβ(0.6)
-    @test magnetisation(Ising(), 0.8,2) ≈ magofβ(0.8)
+    @test isapprox(magnetisation(Ising(), 0,2), magofβ(Ising(),0), atol=1e-6)
+    @test magnetisation(Ising(), 1,2) ≈ magofβ(Ising(),1)
+    @test isapprox(magnetisation(Ising(), 0.2,10), magofβ(Ising(),0.2), atol = 1e-4)
+    @test isapprox(magnetisation(Ising(), 0.4,10), magofβ(Ising(),0.4), atol = 1e-3)
+    @test magnetisation(Ising(), 0.6,4) ≈ magofβ(Ising(),0.6)
+    @test magnetisation(Ising(), 0.8,2) ≈ magofβ(Ising(),0.8)
 
     Random.seed!(9)
     foo = x -> magnetisation(Ising(), x,2)

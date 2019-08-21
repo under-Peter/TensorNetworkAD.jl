@@ -19,46 +19,45 @@ function diaglocalhamiltonian(diag::Vector)
 end
 
 """
-    energy(h, tin; χ, tol, maxit)
+    energy(h, ipeps; χ, tol, maxit)
 
-return the energy of the ipeps described by local rank-5 tensors `tin` with
-2-site hamiltonian `h` and calculated via a ctmrg with parameters `χ`, `tol`
-and `maxit`.
+return the energy of the `ipeps` 2-site hamiltonian `h` and calculated via a
+ctmrg with parameters `χ`, `tol` and `maxit`.
 """
 function energy(h::AbstractArray{T,4}, ipeps::IPEPS; χ::Int, tol::Real, maxit::Int) where T
     ipeps = indexperm_symmetrize(ipeps)  # NOTE: this is not good
     D = getd(ipeps)^2
     s = gets(ipeps)
-    ap = ein"abcdx,ijkly -> aibjckdlxy"(ipeps.t, conj(ipeps.t))
+    ap = ein"abcdx,ijkly -> aibjckdlxy"(ipeps.bulk, conj(ipeps.bulk))
     ap = reshape(ap, D, D, D, D, s, s)
     a = ein"ijklaa -> ijkl"(ap)
 
     rt = SquareCTMRGRuntime(a, Val(:raw), χ)
-    rt, vals = ctmrg(rt; tol=tol, maxit=maxit)
+    rt  = ctmrg(rt; tol=tol, maxit=maxit)
     e = expectationvalue(h, ap, rt)
     return e
 end
 
 """
-    expectationvalue(h, ap, (c,t))
+    expectationvalue(h, ap, rt)
 
 return the expectationvalue of a two-site operator `h` with the sites
 described by rank-6 tensor `ap` each and an environment described by
-a corner tensor `c` and row/column tensor `t`.
+a `SquareCTMRGRuntime` `rt`.
 """
 function expectationvalue(h, ap, rt::SquareCTMRGRuntime) where T
-    c, t = rt.c, rt.t
+    corner, edge = rt.corner, rt.edge
     ap /= norm(ap)
-    l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(c,t,t,ap,c,t)
+    l = ein"ab,ica,bde,cjfdlm,eg,gfk -> ijklm"(corner,edge,edge,ap,corner,edge)
     e = ein"abcij,abckl,ijkl -> "(l,l,h)[]
     n = ein"ijkaa,ijkbb -> "(l,l)[]
     return e/n
 end
 
 """
-    optimiseipeps(t, h, χ, tol, maxit; optimargs = (), optimmethod = LBFGS(m = 20))
+    optimiseipeps(ipeps, h; χ, tol, maxit, optimargs = (), optimmethod = LBFGS(m = 20))
 
-return the tensor `t'` that describes an ipeps that minimises the energy of the
+return the tensor `bulk'` that describes an ipeps that minimises the energy of the
 two-site hamiltonian `h`. The minimization is done using `Optim` with default-method
 `LBFGS`. Alternative methods can be specified by loading `LineSearches` and
 providing `optimmethod`. Other options to optim can be passed with `optimargs`.
@@ -67,9 +66,9 @@ The energy is calculated using ctmrg with parameters `χ`, `tol` and `maxit`.
 function optimiseipeps(ipeps::IPEPS{LT}, h; χ::Int, tol::Real, maxit::Int,
         optimargs = (),
         optimmethod = LBFGS(m = 20)) where LT
-    t = ipeps.t
+    bulk = ipeps.bulk
     let energy = x -> real(energy(h, IPEPS{LT}(x); χ=χ, tol=tol, maxit=maxit))
         res = optimize(energy,
-            Δ -> Zygote.gradient(energy,Δ)[1], t, optimmethod, inplace = false, optimargs...)
+            Δ -> Zygote.gradient(energy,Δ)[1], bulk, optimmethod, inplace = false, optimargs...)
     end
 end

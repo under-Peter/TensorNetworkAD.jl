@@ -2,8 +2,18 @@ using Zygote
 using LinearAlgebra
 
 @Zygote.nograd StopFunction
+@Zygote.nograd _initializect_square
 
-# patch
+@Zygote.adjoint function IPEPS{LT,T,N,AT}(bulk) where {LT,T,N,AT}
+    IPEPS{LT,T,N,AT}(bulk), dy -> (dy.bulk,)
+end
+
+@Zygote.adjoint function CTMRGRuntime{LT}(bulk::AT,
+        corner::AbstractArray{T}, edge::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
+        return CTMRGRuntime{LT}(bulk,corner,edge), dy->(dy.bulk, dy.corner, dy.edge)
+end
+
+# patch since it's currently broken otherwise
 @Zygote.adjoint function Base.typed_hvcat(::Type{T}, rows::Tuple{Vararg{Int}}, xs::S...) where {T,S}
   Base.typed_hvcat(T,rows, xs...), ȳ -> (nothing, nothing, permutedims(ȳ)...)
 end
@@ -20,14 +30,29 @@ end
 
 @doc raw"
     num_grad(f, K::Real; [δ = 1e-5])
+
 return the numerical gradient of `f` at `K` calculated with
 `(f(K+δ/2) - f(K-δ/2))/δ`
+
+# example
+
+```jldoctest; setup = :(using TensorNetworkAD)
+julia> TensorNetworkAD.num_grad(x -> x * x, 3) ≈ 6
+true
+```
 "
 num_grad(f, K::Real; δ::Real = 1e-5) = (f(K+δ/2) - f(K-δ/2))/δ
 
 @doc raw"
     num_grad(f, K::AbstractArray; [δ = 1e-5])
 return the numerical gradient of `f` for each element of `K`.
+
+# example
+
+```jldoctest; setup = :(using TensorNetworkAD, LinearAlgebra)
+julia> TensorNetworkAD.num_grad(tr, rand(2,2)) ≈ I
+true
+```
 "
 function num_grad(f, a::AbstractArray; δ::Real = 1e-5)
     map(CartesianIndices(a)) do i

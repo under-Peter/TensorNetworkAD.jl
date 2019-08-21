@@ -24,7 +24,7 @@ end
 """
     model_tensor(::Ising,β)
 return the isingtensor at inverse temperature `β` for a two-dimensional
-grid tensor-network.
+square lattice tensor-network.
 """
 function model_tensor(::Ising, β::Real)
     a = reshape(Float64[1 0 0 0; 0 0 0 0; 0 0 0 0; 0 0 0 1], 2,2,2,2)
@@ -36,7 +36,7 @@ end
 """
     model_tensor(::Ising,β)
 return the operator for the magnetisation at inverse temperature `β`
-at a site in the two-dimensional ising model on a grid in tensor-network form.
+at a site in the two-dimensional ising model on a square lattice in tensor-network form.
 """
 function mag_tensor(::Ising, β)
     a = reshape(Float64[1 0 0 0; 0 0 0 0; 0 0 0 0; 0 0 0 -1] , 2,2,2,2)
@@ -46,9 +46,9 @@ function mag_tensor(::Ising, β)
 end
 
 """
-    magnetisation(Ising(), β, χ)
+    magnetisation(model<:HamiltonianModel, β, χ)
 
-return the magnetisation of the isingmodel as a function of the inverse
+return the magnetisation of the `model` as a function of the inverse
 temperature `β` and the environment bonddimension `χ` as calculated with
 ctmrg.
 """
@@ -56,10 +56,10 @@ function magnetisation(model::MT, β, χ) where {MT <: HamiltonianModel}
     a = model_tensor(model,β)
     m = mag_tensor(model, β)
     rt = SquareCTMRGRuntime(a, Val(:random), χ)
-    env, vals = ctmrg(rt; tol=1e-6, maxit=100)
-    c, t = env.c, env.t
-    ctc  = ein"ia,ajb,bk -> ijk"(c,t,c)
-    env  = ein"alc,ckd,bjd,bia -> ijkl"(ctc,t,ctc,t)
+    env = ctmrg(rt; tol=1e-6, maxit=100)
+    corner, edge = env.corner, env.edge
+    ctc  = ein"ia,ajb,bk -> ijk"(corner,edge,corner)
+    env  = ein"alc,ckd,bjd,bia -> ijkl"(ctc,edge,ctc,edge)
     mag  = ein"ijkl,ijkl ->"(env,m)[]
     norm = ein"ijkl,ijkl ->"(env,a)[]
 
@@ -67,8 +67,8 @@ function magnetisation(model::MT, β, χ) where {MT <: HamiltonianModel}
 end
 
 """
-    magofβ(β)
+    magofβ(::Ising,β)
 return the analytical result for the magnetisation at inverse temperature
 `β` for the 2d classical ising model.
 """
-magofβ(β) = β > isingβc ? (1-sinh(2*β)^-4)^(1/8) : 0.
+magofβ(::Ising, β) = β > isingβc ? (1-sinh(2*β)^-4)^(1/8) : 0.

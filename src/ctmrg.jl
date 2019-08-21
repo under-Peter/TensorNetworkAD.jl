@@ -12,88 +12,100 @@ export CTMRGRuntime, SquareCTMRGRuntime
 
 # NOTE: should be renamed to more explicit names
 """
-the size of `a` is `D × D × D × D`
-the size of `c` is `χ × χ`
-the size of `t` is `χ × D × χ`
+    CTMRGRuntime{LT}
 
-Here, `D` is equal to `d^2` as in iPEPS
+a struct to hold the tensors during the `ctmrg` algorithm, containing
+- `D × D × D × D` `bulk` tensor
+- `χ × χ` `corner` tensor
+- `χ × D × χ` `edge` tensor
+and `LT` is a AbstractLattice to define the lattice type.
 """
-struct CTMRGRuntime{LT,T,N,AT<:AbstractArray{T,N}}
-    a::AT
-    c
-    t
-    function CTMRGRuntime{LT}(a::AT,
+struct CTMRGRuntime{LT,T,N,AT<:AbstractArray{T,N},CT,ET}
+    bulk::AT
+    corner::CT
+    edge::ET
+    function CTMRGRuntime{LT}(bulk::AT,
         # TODO: check input size in constructor
-        c::AbstractArray{T}, t::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
-        new{LT,T,N,AT}(a,c,t)
+        corner::AbstractArray{T}, edge::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
+        new{LT,T,N,AT,typeof(corner), typeof(edge)}(bulk,corner,edge)
     end
 end
 const SquareCTMRGRuntime{T,AT} = CTMRGRuntime{SquareLattice,T,4,AT}
-SquareCTMRGRuntime(a::AT,c,t) where {T,AT<:AbstractArray{T, 4}} = CTMRGRuntime{SquareLattice}(a,c,t)
+SquareCTMRGRuntime(bulk::AT,corner,edge) where {T,AT<:AbstractArray{T, 4}} = CTMRGRuntime{SquareLattice}(bulk,corner,edge)
 
-getχ(rt::CTMRGRuntime) = size(rt.c, 1)
-getD(rt::CTMRGRuntime) = size(rt.a, 1)
+getχ(rt::CTMRGRuntime) = size(rt.corner, 1)
+getD(rt::CTMRGRuntime) = size(rt.bulk, 1)
 
-"""
-    initialize_env(mode, a, χ)
+@doc raw"
+    SquareCTMRGRuntime(bulk::AbstractArray{T,4}, env::Val, χ::Int)
 
-return a χ×χ corner-matrix `c`.
-if `randinit == true`, return a random matrix,
-otherwise return `a` with two indices summed over
-embedded in a χ×χ zeros-matrix.
+create a `SquareCTMRGRuntime` with bulk-tensor `bulk`. The corner and edge
+tensors are initialized according to `env`. If `env = Val(:random)`,
+the corner is initialized as a random χ×χ tensor and the edge is initialized
+as a random χ×D×χ tensor where `D = size(bulk,1)`.
+If `env = Val(:raw)`, corner- and edge-tensor are initialized by summing
+over one or two indices of `bulk` respectively and embedding the result
+in zeros-tensors of the appropriate size, truncating if necessary.
 
-return a χ×D×χ tensor `t` where `D` is the
-dimension of the indices of `a`.
-if `randinit == true`, return a random matrix,
-otherwise return `a` with two indices summed over
-embedded in a χ×D×χ zeros-matrix.
-"""
-function SquareCTMRGRuntime(a::AbstractArray{T,4}, env::Val, χ::Int) where T
-    return SquareCTMRGRuntime(a, _initializect_square(a, env, χ)...)
+# example
+
+```jldoctest; setup = :(using TensorNetworkAD)
+julia> rt = SquareCTMRGRuntime(randn(2,2,2,2), Val(:raw), 4);
+
+julia> rt.corner[1:2,1:2] ≈ dropdims(sum(rt.bulk, dims = (3,4)), dims = (3,4))
+true
+
+julia> rt.edge[1:2,1:2,1:2] ≈ dropdims(sum(rt.bulk, dims = 4), dims = 4)
+true
+```
+"
+function SquareCTMRGRuntime(bulk::AbstractArray{T,4}, env::Val, χ::Int) where T
+    return SquareCTMRGRuntime(bulk, _initializect_square(bulk, env, χ)...)
 end
 
-function _initializect_square(a::AbstractArray{T,4}, env::Val{:random}, χ::Int) where T
-    c = randn(T, χ, χ)
-    c += adjoint(c)
-    t = randn(T, χ, size(a,1), χ)
-    t += permutedims(conj(t), (3,2,1))
-    c, t
+function _initializect_square(bulk::AbstractArray{T,4}, env::Val{:random}, χ::Int) where T
+    corner = randn(T, χ, χ)
+    edge = randn(T, χ, size(bulk,1), χ)
+    corner += adjoint(corner)
+    edge += permutedims(conj(edge), (3,2,1))
+    corner, edge
 end
 
-function _initializect_square(a::AbstractArray{T,4}, env::Val{:raw}, χ::Int) where T
-    c = zeros(T, χ, χ)
-    cinit = ein"ijkl -> ij"(a)
+function _initializect_square(bulk::AbstractArray{T,4}, env::Val{:raw}, χ::Int) where T
+    corner = zeros(T, χ, χ)
+    edge = zeros(T, χ, size(bulk,1), χ)
+    cinit = ein"ijkl -> ij"(bulk)
+    tinit = ein"ijkl -> ijk"(bulk)
     foreach(CartesianIndices(cinit)) do i
-        i in CartesianIndices(c) && (c[i] = cinit[i])
+        i in CartesianIndices(corner) && (corner[i] = cinit[i])
     end
-    t = zeros(T, χ, size(a,1), χ)
-    tinit = ein"ijkl -> ijk"(a)
     foreach(CartesianIndices(tinit)) do i
-        i in CartesianIndices(t) && (t[i] = tinit[i])
+        i in CartesianIndices(edge) && (edge[i] = tinit[i])
     end
-    c, t
+    corner, edge
 end
 
-@Zygote.nograd _initializect_square
-@Zygote.adjoint function CTMRGRuntime{LT}(a::AT,
-        c::AbstractArray{T}, t::AbstractArray{T}) where {LT<:AbstractLattice,T,N,AT<:AbstractArray{T,N}}
-        return CTMRGRuntime{LT}(a,c,t), dy->(dy.a, dy.c, dy.t)
-end
 
 """
-    ctmrg(a, χ, tol, maxit::Integer, cinit = nothing, tinit = nothing, randinit = false)
-returns a tuple `(c,t)` where `c` is the corner-transfer matrix of `a`
-and `t` is the half-infinite column/row tensor of `a`.
-`a` is assumed to satisfy symmetries w.r.t all possible permutations of
-its indices.
-Initial values for `c` and `t` can be provided via keyword-arguments.
-If no values are provided, `c` and `t` are initialized with random
-values (if `randinit = true`) or by reducing over indices of `a` (otherwise).
+    ctmrg(rt::CTMRGRuntime; tol, maxit)
 
-The ctmrg-algorithm is run for up to `maxit` iterations with
-bond-dimension `χ` for the environment. If the sum of absolute
-differences between `c`s singular values between two steps is
-below `tol` the algorithm is assumed to be converged.
+return a `CTMRGRuntime` with an environment consisting of
+corner and edge tensor that have either been iterated for `maxit` iterations
+or converged according to `tol`.
+Convergence is tested by looking at the sum of the absolut differences in the
+corner singular values. If it is less than `tol`, convergence is reached.
+
+# example
+```
+julia> a = model_tensor(Ising(),β);
+
+julia> rt = SquareCTMRGRuntime(a, Val(:random), χ);
+
+julia> env = ctmrg(rt; tol=1e-6, maxit=100);
+```
+
+for the environment of an isingmodel at inverse temperature β
+on an infinite square lattice.
 """
 function ctmrg(rt::CTMRGRuntime; tol::Real, maxit::Integer)
     # initialize
@@ -101,23 +113,22 @@ function ctmrg(rt::CTMRGRuntime; tol::Real, maxit::Integer)
 
     stopfun = StopFunction(oldvals, -1, tol, maxit)
     rt, vals = fixedpoint(res->ctmrgstep(res...), (rt, oldvals), stopfun)
-    return rt, vals
+    return rt
 end
 
 """
     ctmrgstep(rt,vals)
 
-evaluate one step of the ctmrg-algorithm, returning an updated `(c,t,vals)`
-which results from growing, renormalizing and symmetrizing `c` and `t` with `a`.
-`vals` are the singular values of the grown corner-matrix normalized such that
-the leading singular value is 1.
+evaluate one step of the ctmrg-algorithm, returning a tuple of an updated `CTMRGRuntime`
+with updated `corner` and `edge` tensor and a vector of singular values to test
+convergence with.
 """
 function ctmrgstep(rt::SquareCTMRGRuntime, vals)
     # grow
-    a, c, t = rt.a, rt.c, rt.t
+    bulk, corner, edge = rt.bulk, rt.corner, rt.edge
     D, χ = getD(rt), getχ(rt)
-    cp = ein"ad,iba,dcl,jkcb -> ijlk"(c, t, t, a)
-    tp = ein"iam,jkla -> ijklm"(t,a)
+    cp = ein"ad,iba,dcl,jkcb -> ijlk"(corner, edge, edge, bulk)
+    tp = ein"iam,jkla -> ijklm"(edge,bulk)
 
     # renormalize
     cpmat = reshape(cp, χ*D, χ*D)
@@ -125,18 +136,18 @@ function ctmrgstep(rt::SquareCTMRGRuntime, vals)
     u, s, v = svd(cpmat)
     z = reshape(u[:, 1:χ], χ, D, χ)
 
-    c = ein"abcd,abi,cdj -> ij"(cp, conj(z), z)
-    t = ein"abjcd,abi,dck -> ijk"(tp, conj(z), z)
+    corner = ein"abcd,abi,cdj -> ij"(cp, conj(z), z)
+    edge = ein"abjcd,abi,dck -> ijk"(tp, conj(z), z)
 
     vals = s ./ s[1]
 
     # indexperm_symmetrize
-    c += c'
-    t += ein"ijk -> kji"(conj(t))
+    corner += corner'
+    edge += ein"ijk -> kji"(conj(edge))
 
     # normalize
-    c /= norm(c)
-    t /= norm(t)
+    corner /= norm(corner)
+    edge /= norm(edge)
 
-    return SquareCTMRGRuntime(a, c, t), vals
+    return SquareCTMRGRuntime(bulk, corner, edge), vals
 end

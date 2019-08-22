@@ -3,6 +3,7 @@ abstract type HamiltonianModel end
 
 @doc raw"
     hamiltonian(model<:HamiltonianModel)
+
 return the hamiltonian of the `model` as a two-site tensor operator.
 "
 function hamiltonian end
@@ -11,6 +12,7 @@ struct Ising <: HamiltonianModel end
 
 @doc raw"
     TFIsing(hx::Real)
+
 return a struct representing the transverse field ising model with magnetisation `hx`.
 "
 struct TFIsing{T<:Real} <: HamiltonianModel
@@ -32,6 +34,7 @@ end
 
 @doc raw"
     Heisenberg(Jz::T,Jx::T,Jy::T) where {T<:Real}
+
 return a struct representing the heisenberg model with magnetisation fields
 `Jz`, `Jx` and `Jy`..
 "

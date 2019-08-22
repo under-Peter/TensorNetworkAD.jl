@@ -45,6 +45,7 @@ num_grad(f, K::Real; δ::Real = 1e-5) = (f(K+δ/2) - f(K-δ/2))/δ
 
 @doc raw"
     num_grad(f, K::AbstractArray; [δ = 1e-5])
+    
 return the numerical gradient of `f` for each element of `K`.
 
 # example

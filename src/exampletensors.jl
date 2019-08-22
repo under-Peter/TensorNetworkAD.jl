@@ -23,6 +23,7 @@ end
 
 """
     model_tensor(::Ising,β)
+
 return the isingtensor at inverse temperature `β` for a two-dimensional
 square lattice tensor-network.
 """
@@ -34,7 +35,8 @@ function model_tensor(::Ising, β::Real)
 end
 
 """
-    model_tensor(::Ising,β)
+    mag_tensor(::Ising,β)
+
 return the operator for the magnetisation at inverse temperature `β`
 at a site in the two-dimensional ising model on a square lattice in tensor-network form.
 """
@@ -50,7 +52,7 @@ end
 
 return the magnetisation of the `model` as a function of the inverse
 temperature `β` and the environment bonddimension `χ` as calculated with
-ctmrg.
+ctmrg. Requires that `mag_tensor` and `model_tensor` are defined for `model`.
 """
 function magnetisation(model::MT, β, χ) where {MT <: HamiltonianModel}
     a = model_tensor(model,β)
@@ -68,6 +70,7 @@ end
 
 """
     magofβ(::Ising,β)
+
 return the analytical result for the magnetisation at inverse temperature
 `β` for the 2d classical ising model.
 """

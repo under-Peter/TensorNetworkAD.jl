@@ -8,6 +8,7 @@ const id2 = Float64[1 0; 0 1]
 
 """
     diaglocalhamiltonian(diag::Vector)
+
 return the 2-site Hamiltonian with single-body terms given
 by the diagonal `diag`.
 """

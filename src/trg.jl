@@ -3,6 +3,7 @@ using BackwardsLinalg
 
 @doc raw"
     trg(a, χ, niter)
+
 return the partition-function of a two-dimensional system of size `2^niter`
 described by the tensor `a` calculated via the tensor renormalization group
 algorithm.

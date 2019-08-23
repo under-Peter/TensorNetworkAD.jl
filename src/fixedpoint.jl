@@ -23,9 +23,10 @@ end
 
 """
     (st::StopFunction)(state)
-stopfunction for ctmrg, returning true if
-singular values are converged or the maximum
-number of iterations is reached.
+    
+stopfunction for ctmrg, returning true if singular values are converged or the maximum
+number of iterations is reached. Implemented as a closure since it needs to remember
+the last singular values it saw for comparison.
 """
 function (st::StopFunction)(state)
     st.counter += 1

@@ -101,7 +101,6 @@ end
     e = minimum(res)
     @test isapprox(e, -0.66023, atol = 1e-3)
 
-    # Random.seed!(0)
     h = hamiltonian(Heisenberg(2.0, 2.0, 1.0))
     ipeps = SquareIPEPS(randn(2,2,2,2,2))
     a = indexperm_symmetrize(ipeps)
@@ -126,8 +125,8 @@ end
     a = indexperm_symmetrize(ipeps)
     gradzygote = first(Zygote.gradient(a) do x
         energy(h,x; χ=4, tol=0, maxit=100)
-    end).t
-    gradnum = num_grad(a.t, δ=1e-3) do x
+    end).bulk
+    gradnum = num_grad(a.bulk, δ=1e-3) do x
         energy(h, SquareIPEPS(x); χ=4, tol=0, maxit=100)
     end
 
@@ -139,20 +138,20 @@ end
     h = hamiltonian(Heisenberg())
     ipeps = SquareIPEPS(randn(2,2,2,2,2))
     a = indexperm_symmetrize(ipeps)
-    ca = SquareIPEPS(a.t .+ 0im)
+    ca = SquareIPEPS(a.bulk .+ 0im)
     @test energy(h,a; χ=4, tol=1e-12, maxit=100) ≈ energy(h,ca; χ=4, tol=1e-12, maxit=100)
     ϕ = exp(1im * rand()* 2π)
-    ca = SquareIPEPS(a.t .* ϕ)
+    ca = SquareIPEPS(a.bulk .* ϕ)
     @test energy(h,ca; χ=4, tol=1e-12, maxit=100) ≈ energy(h,a; χ=4, tol=1e-12, maxit=100)
 
     gradzygote = first(Zygote.gradient(a) do x
         real(energy(h,x; χ=4, tol=1e-12,maxit=100))
     end)
 
-    ca = SquareIPEPS(a.t .+ 0im)
-    @test gradzygote.t ≈ first(Zygote.gradient(ca) do x
+    ca = SquareIPEPS(a.bulk .+ 0im)
+    @test gradzygote.bulk ≈ first(Zygote.gradient(ca) do x
         real(energy(h,x; χ=4, tol=1e-12,maxit=100))
-    end).t
+    end).bulk
 
     Random.seed!(2)
     # real

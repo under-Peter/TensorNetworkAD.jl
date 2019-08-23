@@ -6,38 +6,34 @@ Infinite projected entangled pair of states.
 `LT` is the type of lattice, `T` and `N` are bulk tensor element type and order.
 """
 struct IPEPS{LT<:AbstractLattice, T, N, AT<:AbstractArray{T, N}}
-    t::AT
+    bulk::AT
     # TODO: check input size in constructor
 end
-IPEPS{LT}(t::AT) where {LT,T,N,AT<:AbstractArray{T,N}} = IPEPS{LT,T,N,AT}(t)
+IPEPS{LT}(bulk::AT) where {LT,T,N,AT<:AbstractArray{T,N}} = IPEPS{LT,T,N,AT}(bulk)
 
 ############### IPEPS on square lattice ###################
-# size of t is `d × d × d × d × s`
+# size of bulk is `d × d × d × d × s`
 const SquareIPEPS{T} = IPEPS{SquareLattice, T, 5}
-function SquareIPEPS(t::AT) where {T,AT<:AbstractArray{T, 5}}
-    # NOTE: from here, wrapping `t` with a `IPEPS` type can prevent programing from illegal input with incorrect size.
-    size(t,1) == size(t,2) == size(t,3) == size(t,4) || throw(DimensionMismatch(
-        "size of tensor error, should be `(d, d, d, d, s)`, got $(size(t))."))
-    IPEPS{SquareLattice,T,5,AT}(t)
+function SquareIPEPS(bulk::AT) where {T,AT<:AbstractArray{T, 5}}
+    # NOTE: from here, wrapping `bulk` with a `IPEPS` type can prevent programing from illegal input with incorrect size.
+    size(bulk,1) == size(bulk,2) == size(bulk,3) == size(bulk,4) || throw(DimensionMismatch(
+        "size of tensor error, should be `(d, d, d, d, s)`, got $(size(bulk))."))
+    IPEPS{SquareLattice,T,5,AT}(bulk)
 end
-getd(ipeps::SquareIPEPS) = size(ipeps.t, 1)
-gets(ipeps::SquareIPEPS) = size(ipeps.t, 5)
+getd(ipeps::SquareIPEPS) = size(ipeps.bulk, 1)
+gets(ipeps::SquareIPEPS) = size(ipeps.bulk, 5)
 
 """
-    indexperm_symmetrize(x::AbstractArray{T,5})
+    indexperm_symmetrize(ipeps::SquareIPEPS)
 
-return a normalized `x` whith left-right,
-up-down, diagonal and rotational symmetry.
+return a `SquareIPEPS` based on `ipeps` that is symmetric under
+permutation of its virtual indices.
 """
 function indexperm_symmetrize(ipeps::SquareIPEPS)
-    x = ipeps.t
+    x = ipeps.bulk
     x += permutedims(x, (1,4,3,2,5)) # left-right
     x += permutedims(x, (3,2,1,4,5)) # up-down
     x += permutedims(x, (2,1,4,3,5)) # diagonal
     x += permutedims(x, (4,3,2,1,5)) # rotation
     return SquareIPEPS(x / norm(x))
-end
-
-@Zygote.adjoint function IPEPS{LT,T,N,AT}(t) where {LT,T,N,AT}
-    IPEPS{LT,T,N,AT}(t), dy -> (dy.t,)
 end

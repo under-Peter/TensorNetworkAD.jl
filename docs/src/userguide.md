@@ -1,14 +1,18 @@
 # User Guide
 
-The package provides three algorithms: `trg`, `ctmrg` and `variationalipeps`-optimisation
+The package provides three algorithms: `trg`, `ctmrg` and `variationalipeps`-optimisation.
 
 ## Tensor Renormalization Group
 
 The `trg` function can currently be used to get the partition function of a classical
 hamiltonian model on a square lattice.
-Providing the tensor-network representation of the model as a rank-4 tensor `a`,
-a cutoff-dimension `χ` and a number of iterations `niter`, `trg(a, χ, niter)`
-returns the partition function _per site_.
+`trg` uses the principle of _coarse graining_ - low-level detail is discarded
+in favor of dynamics that dominate the big picture.
+For an excellent guide to implement `trg`, check out [this tutorial for `iTensor`](https://itensor.org/docs.cgi?page=book/trg).
+
+The input to `trg` is a rank-4 tensor `a` that is the tensor-network representation of a model,
+a cutoff-dimension `χ` and a number of iterations `niter`.
+`trg(a, χ, niter)` returns the partition function _per site_.
 
 The result is per site because otherwise the partition function grows exponentially
 (with the system size) in the number of iterations, leading to numerical problems quickly.
@@ -30,6 +34,10 @@ temperature `β` using the `model_tensor` function provided by `TensorNetworkAD`
 
 The `ctmrg` function can be used to find a representation of the
 environment of an ipeps.
+The environment can then be used to calculate local quantities for a system of infinite size such as the magnetisation or (short) correlation-lengths.
+For an introduction, I'd recommend  an [overview paper by
+Roman Orus](https://arxiv.org/pdf/0905.3225.pdf).
+
 To use the function, first whatever tensor represents the `bulk` of the ipeps
 needs to be wrapped in a `CTMRGRuntime` structure which takes care of initializing
 the environment - either randomly or from the `bulk` tensor.

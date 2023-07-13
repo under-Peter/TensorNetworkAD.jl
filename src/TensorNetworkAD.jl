@@ -1,6 +1,7 @@
 module TensorNetworkAD
-using Zygote, BackwardsLinalg
+using Zygote #, BackwardsLinalg
 using OMEinsum
+import LinearAlgebra
 
 export trg, num_grad
 export ctmrg

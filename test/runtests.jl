@@ -18,6 +18,11 @@ using Random
         include("fixedpoint.jl")
     end
 
+    @testset "svd" begin
+        println("svd tests running...")
+        include("svd.jl")
+    end
+
     @testset "trg" begin
         println("trg tests running...")
         include("trg.jl")
